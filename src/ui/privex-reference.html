@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privex - Private rules. Automatic execution.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cabinet+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #090909;
+  --bg2: #0f0f0f;
+  --bg3: #141414;
+  --bg4: #1a1a1a;
+  --border: rgba(255,255,255,0.055);
+  --border2: rgba(255,255,255,0.1);
+  --text: #f0ede8;
+  --text2: #666;
+  --text3: #2a2a2a;
+  --orange: #FF6B35;
+  --orange2: #ff8c5a;
+  --odim: rgba(255,107,53,0.07);
+  --mono: 'DM Mono', monospace;
+  --head: 'Cabinet Grotesk', sans-serif;
+}
+.light {
+  --bg: #f2efe9;
+  --bg2: #e8e4dc;
+  --bg3: #dedad0;
+  --bg4: #d0ccc0;
+  --border: rgba(0,0,0,0.06);
+  --border2: rgba(0,0,0,0.12);
+  --text: #0e0e0e;
+  --text2: #5a5a5a;
+  --text3: #ccc;
+  --orange: #d94f1a;
+  --orange2: #FF6B35;
+  --odim: rgba(217,79,26,0.07);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--head); background: var(--bg); color: var(--text); overflow-x: hidden; transition: background 0.35s, color 0.35s; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 64px;
+  background: rgba(9,9,9,0.93);
+  border-bottom: 0.5px solid var(--border2);
+  backdrop-filter: blur(20px);
+  transition: background 0.35s;
+  gap: 20px;
+}
+.light nav { background: rgba(242,239,233,0.95); }
+.nlogo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+.nlogo-icon { width: 28px; height: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.nlogo-sq { border-radius: 3px; background: var(--orange); }
+.nlogo-sq:nth-child(2), .nlogo-sq:nth-child(3) { opacity: 0.3; }
+.nlogo:hover .nlogo-sq:nth-child(2), .nlogo:hover .nlogo-sq:nth-child(3) { opacity: 0.65; transition: opacity 0.25s; }
+.nlogo-text { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--text); letter-spacing: 1.5px; }
+.nlogo-text span { color: var(--orange); }
+.nlinks { display: flex; gap: 28px; align-items: center; }
+.nlinks a { font-family: var(--mono); font-size: 11px; color: var(--text2); text-decoration: none; letter-spacing: 0.8px; text-transform: uppercase; transition: color 0.2s; white-space: nowrap; }
+.nlinks a:hover { color: var(--orange); }
+.nright { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.btn-wallet { font-family: var(--mono); font-size: 11px; background: transparent; color: var(--text2); border: 0.5px solid var(--border2); padding: 8px 16px; border-radius: 7px; cursor: pointer; letter-spacing: 0.5px; display: flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
+.btn-wallet:hover { border-color: var(--orange); color: var(--orange); }
+.btn-launch { font-family: var(--mono); font-size: 11px; background: var(--orange); color: #fff; border: none; padding: 9px 18px; border-radius: 7px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; transition: opacity 0.2s; white-space: nowrap; }
+.btn-launch:hover { opacity: 0.82; }
+.btn-theme { width: 34px; height: 34px; border: 0.5px solid var(--border2); border-radius: 7px; background: var(--bg2); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; color: var(--text2); }
+.btn-theme:hover { border-color: var(--orange); color: var(--orange); }
+.nmenu { display: none; flex-direction: column; gap: 4px; cursor: pointer; padding: 4px; background: none; border: none; }
+.nmenu span { display: block; width: 20px; height: 1.5px; background: var(--text2); border-radius: 2px; }
+.ndrawer { display: none; position: fixed; top: 64px; left: 0; right: 0; background: var(--bg2); border-bottom: 0.5px solid var(--border2); z-index: 199; padding: 20px 24px; flex-direction: column; gap: 14px; }
+.ndrawer.open { display: flex; }
+.ndrawer a { font-family: var(--mono); font-size: 13px; color: var(--text2); text-decoration: none; letter-spacing: 0.8px; text-transform: uppercase; padding: 8px 0; border-bottom: 0.5px solid var(--border); transition: color 0.2s; }
+.ndrawer a:hover { color: var(--orange); }
+
+/* HERO */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 100px 24px 120px;
+  text-align: center;
+  overflow: hidden;
+  /* slightly lifted bg so grid is visible */
+  background: #0f0f0f;
+}
+.light .hero { background: #eae6dc; }
+
+/* GRID - only hero, radial fade, gentle */
+.hero-grid {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,107,53,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,107,53,0.055) 1px, transparent 1px);
+  background-size: 52px 52px;
+  /* radial mask: visible in center, fades at sides, fades at BOTTOM into next section */
+  mask-image: radial-gradient(ellipse 100% 90% at 50% 40%, black 20%, rgba(0,0,0,0.6) 55%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 100% 90% at 50% 40%, black 20%, rgba(0,0,0,0.6) 55%, transparent 85%);
+}
+.light .hero-grid {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+}
+
+/* GLOW - sides only, very subtle */
+.hero-glow-l {
+  position: absolute;
+  width: 320px; height: 500px;
+  top: 50%; left: -60px; transform: translateY(-55%);
+  background: radial-gradient(ellipse, rgba(255,107,53,0.09) 0%, transparent 70%);
+  pointer-events: none; filter: blur(80px); z-index: 0;
+}
+.hero-glow-r {
+  position: absolute;
+  width: 320px; height: 500px;
+  top: 50%; right: -60px; transform: translateY(-55%);
+  background: radial-gradient(ellipse, rgba(255,107,53,0.065) 0%, transparent 70%);
+  pointer-events: none; filter: blur(80px); z-index: 0;
+}
+
+/* shadow blending hero into next section */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 180px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
+  z-index: 1;
+}
+.light .hero::after { background: linear-gradient(to bottom, transparent, var(--bg2)); }
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--orange); border: 0.5px solid rgba(255,107,53,0.3);
+  padding: 6px 14px; border-radius: 20px; margin-bottom: 28px;
+  background: var(--odim); position: relative; z-index: 2;
+}
+.pdot { width: 5px; height: 5px; background: var(--orange); border-radius: 50%; animation: pd 2s ease-in-out infinite; }
+@keyframes pd { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
+
+.hero h1 {
+  font-family: var(--head);
+  font-size: clamp(52px, 10vw, 108px);
+  font-weight: 900; line-height: 0.93; letter-spacing: -3.5px;
+  color: var(--text); position: relative; z-index: 2; margin-bottom: 6px;
+}
+.hero h1 .oa { color: var(--orange); }
+.hero h1 .dim { color: var(--text2); display: block; font-size: clamp(36px, 7vw, 78px); font-weight: 700; margin-top: 4px; }
+.hero-sub { font-family: var(--mono); font-size: 13px; color: var(--text2); line-height: 1.85; max-width: 460px; margin: 24px auto 36px; position: relative; z-index: 2; }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 2; }
+.btn-prim { font-family: var(--mono); font-size: 12px; background: var(--orange); color: #fff; border: none; padding: 13px 26px; border-radius: 8px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; transition: opacity 0.2s, transform 0.15s; display: flex; align-items: center; gap: 8px; }
+.btn-prim:hover { opacity: 0.83; transform: translateY(-1px); }
+.btn-sec { font-family: var(--mono); font-size: 12px; background: transparent; color: var(--text2); border: 0.5px solid var(--border2); padding: 13px 26px; border-radius: 8px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.2s; }
+.btn-sec:hover { border-color: var(--orange); color: var(--orange); }
+
+/* TERMINAL - with generous spacing above */
+.term-wrap { position: relative; z-index: 2; max-width: 660px; width: 100%; margin: 72px auto 0; padding: 0 16px; }
+.term { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; overflow: hidden; font-family: var(--mono); }
+.term-bar { background: var(--bg3); border-bottom: 0.5px solid var(--border); padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; }
+.term-dots { display: flex; gap: 6px; }
+.td { width: 10px; height: 10px; border-radius: 50%; }
+.td.r { background: #ff5f57; } .td.y { background: #febc2e; } .td.g { background: #28c840; }
+.term-label { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; }
+.term-live { font-size: 10px; color: var(--orange); display: flex; align-items: center; gap: 5px; letter-spacing: 1px; }
+.term-body { padding: 20px 20px 16px; min-height: 240px; }
+.tl { font-size: 12px; line-height: 2.1; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.tp { color: var(--orange); } .tc { color: var(--text); } .tcmt { color: var(--text3); }
+.tsu { color: #28c840; } .tv { color: var(--orange2); } .tky { color: #6eb3f7; }
+.tblock { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; padding: 12px 14px; margin: 8px 0 10px; }
+.tbr { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 4px 0; gap: 12px; }
+.stag { font-size: 9px; background: var(--odim); border: 0.5px solid rgba(255,107,53,0.4); color: var(--orange); padding: 2px 8px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+.sv { color: var(--orange); opacity: 0.65; letter-spacing: 1px; }
+.tx-feed { margin-top: 12px; border-top: 0.5px solid var(--border); padding-top: 12px; }
+.tx-feed-label { font-size: 9px; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.tx-item { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 4px 0; opacity: 0; transform: translateY(6px); transition: opacity 0.4s, transform 0.4s; }
+.tx-item.show { opacity: 1; transform: none; }
+.tx-hash { color: var(--text3); font-size: 10px; flex-shrink: 0; }
+.tx-action { color: var(--text2); flex: 1; }
+.tx-status { font-size: 9px; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px; text-transform: uppercase; flex-shrink: 0; }
+.tx-status.confirmed { background: rgba(40,200,64,0.1); color: #28c840; border: 0.5px solid rgba(40,200,64,0.3); }
+.tx-status.pending { background: var(--odim); color: var(--orange); border: 0.5px solid rgba(255,107,53,0.3); }
+.tx-status.sealed { background: rgba(110,179,247,0.1); color: #6eb3f7; border: 0.5px solid rgba(110,179,247,0.3); }
+.cursor { display: inline-block; width: 7px; height: 13px; background: var(--orange); animation: blink 1.1s step-end infinite; vertical-align: middle; border-radius: 1px; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* SPACING WRAPPER - generous gap after terminal */
+.after-hero { padding-top: 80px; }
+
+/* STATS */
+.stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 0.5px solid var(--border2); border-bottom: 0.5px solid var(--border2); background: var(--bg2); }
+.stat { padding: 28px 32px; border-right: 0.5px solid var(--border2); transition: background 0.2s; }
+.stat:last-child { border-right: none; }
+.stat:hover { background: var(--bg3); }
+.sn { font-family: var(--mono); font-size: 26px; font-weight: 500; color: var(--orange); letter-spacing: -1px; }
+.sl { font-family: var(--mono); font-size: 9px; color: var(--text2); margin-top: 5px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+/* TICKER */
+.ticker-wrap { position: relative; z-index: 1; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); overflow: hidden; padding: 12px 0; background: var(--bg2); }
+.ticker-track { display: flex; animation: ticker 32s linear infinite; white-space: nowrap; }
+.ticker-item { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--text2); padding: 0 32px; flex-shrink: 0; }
+.tdot { width: 4px; height: 4px; border-radius: 50%; background: var(--orange); opacity: 0.45; }
+@keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+/* SECTION WRAPPERS - alternating bg + subtle dim grid */
+.sec-a { background: var(--bg); position: relative; }
+.sec-b { background: var(--bg2); position: relative; }
+
+/* Dim background grid for inner sections - different from hero */
+.sec-a::before, .sec-b::before {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.011) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.011) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.light .sec-a::before, .light .sec-b::before {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+}
+
+.sec { position: relative; z-index: 1; padding: 90px 40px; max-width: 1100px; margin: 0 auto; }
+.sec-label { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 14px; }
+.sec-title { font-family: var(--head); font-size: clamp(30px, 4.5vw, 56px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.05; color: var(--text); margin-bottom: 52px; }
+.sec-title span { color: var(--orange); }
+
+/* FLOW */
+.flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border2); border: 0.5px solid var(--border2); border-radius: 12px; overflow: hidden; }
+.fstep { background: var(--bg3); padding: 28px 24px; transition: background 0.25s; cursor: default; position: relative; overflow: hidden; }
+.fstep::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--orange); transform:scaleX(0); transition:transform 0.3s ease; transform-origin:left; }
+.fstep:hover { background: var(--bg4); }
+.fstep:hover::after { transform: scaleX(1); }
+.fstep:hover .ficon { background: rgba(255,107,53,0.15); border-color: rgba(255,107,53,0.5); }
+.fnum { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 2px; margin-bottom: 16px; }
+.ficon { width: 36px; height: 36px; background: var(--odim); border: 0.5px solid rgba(255,107,53,0.2); border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.25s; }
+.ftitle { font-family: var(--head); font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.fdesc { font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.85; }
+.ftag { display: inline-block; margin-top: 14px; font-family: var(--mono); font-size: 9px; color: var(--orange); background: var(--odim); border: 0.5px solid rgba(255,107,53,0.3); padding: 3px 8px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+/* USE CASES */
+.ucgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.uc { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 12px; padding: 26px; transition: border-color 0.25s, transform 0.25s, background 0.25s; cursor: default; position: relative; overflow: hidden; }
+.uc::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--orange),transparent); transform:scaleX(0); transition:transform 0.4s ease; }
+.uc:hover { border-color: rgba(255,107,53,0.3); transform: translateY(-3px); background: var(--bg4); }
+.uc:hover::before { transform: scaleX(1); }
+.uc:hover .uc-icon { background: rgba(255,107,53,0.14); border-color: rgba(255,107,53,0.45); }
+.uc-icon { width: 38px; height: 38px; background: var(--odim); border: 0.5px solid rgba(255,107,53,0.18); border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.25s; }
+.uc-t { font-family: var(--head); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.uc-d { font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.85; }
+
+/* WHY */
+.why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; position: relative; }
+.why-grid::before { content: ''; position: absolute; width: 500px; height: 300px; top: 50%; left: 30%; transform: translate(-50%, -50%); background: radial-gradient(ellipse, rgba(255,107,53,0.06) 0%, transparent 65%); pointer-events: none; filter: blur(60px); z-index: 0; }
+.why-grid > * { position: relative; z-index: 1; }
+.why-points { display: flex; flex-direction: column; gap: 4px; }
+.wp { display: flex; gap: 16px; align-items: flex-start; padding: 16px; border-radius: 10px; border: 0.5px solid transparent; transition: border-color 0.25s, background 0.25s; cursor: default; }
+.wp:hover { border-color: var(--border2); background: var(--bg3); }
+.wp:hover .wp-icon { background: rgba(255,107,53,0.14); border-color: rgba(255,107,53,0.45); }
+.wp-icon { width: 38px; height: 38px; background: var(--odim); border: 0.5px solid rgba(255,107,53,0.2); border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.25s; }
+.wp h4 { font-family: var(--head); font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.wp p { font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.8; }
+.ctable { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 12px; overflow: hidden; font-family: var(--mono); }
+.crow { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 0.5px solid var(--border); transition: background 0.2s; }
+.crow:last-child { border-bottom: none; }
+.crow:not(:first-child):hover { background: var(--bg4); }
+.cc { padding: 13px 16px; font-size: 11px; border-right: 0.5px solid var(--border); display: flex; align-items: center; gap: 5px; }
+.cc:last-child { border-right: none; }
+.cc.hd { font-size: 9px; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; background: var(--bg4); }
+.cc.feat { color: var(--text2); }
+.cc.bad { color: #ff5f57; }
+.cc.pvx { background: var(--odim); color: var(--orange); border-right: 0.5px solid var(--border); }
+
+/* TX VOLUME */
+.tvgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.tvc { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 12px; overflow: hidden; transition: border-color 0.25s; }
+.tvc:hover { border-color: rgba(255,107,53,0.3); }
+.tvc-h { background: var(--bg4); border-bottom: 0.5px solid var(--border); padding: 11px 16px; font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+.tvc-b { padding: 14px; }
+.tvr { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 0.5px solid var(--border); font-family: var(--mono); font-size: 11px; }
+.tvr:last-child { border-bottom: none; }
+.tva { color: var(--text2); }
+.tvc-count { color: var(--orange); font-weight: 500; }
+.tvtotal { padding: 11px 14px; border-top: 0.5px solid var(--border2); display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; background: var(--odim); }
+.tvtl { color: var(--text2); }
+.tvtn { color: var(--orange); font-weight: 500; }
+
+/* CTA */
+.cta-sec { position: relative; z-index: 1; padding: 110px 24px; text-align: center; overflow: hidden; background: var(--bg); }
+.cta-sec::before { content:''; position:absolute; inset:0; background-image: linear-gradient(rgba(255,255,255,0.011) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.011) 1px, transparent 1px); background-size: 44px 44px; pointer-events:none; }
+.light .cta-sec::before { background-image: linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px); }
+.cta-glow { position: absolute; width: 700px; height: 500px; top: 50%; left: 50%; transform: translate(-50%,-50%); background: radial-gradient(ellipse, rgba(255,107,53,0.1) 0%, transparent 60%); pointer-events: none; filter: blur(60px); }
+.cta-sec h2 { font-family: var(--head); font-size: clamp(40px, 7vw, 80px); font-weight: 900; letter-spacing: -2.5px; color: var(--text); margin-bottom: 14px; line-height: 1.0; position: relative; z-index: 1; }
+.cta-sec h2 span { color: var(--orange); }
+.cta-sec p { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 36px; position: relative; z-index: 1; }
+
+/* FOOTER */
+footer { position: relative; z-index: 1; border-top: 0.5px solid var(--border2); padding: 56px 40px 32px; background: var(--bg); }
+.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
+.fbrand-logo { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+.ftag-line { font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.7; max-width: 200px; margin-bottom: 18px; }
+.fbuilt { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--text3); border: 0.5px solid var(--border2); padding: 5px 10px; border-radius: 10px; }
+.fbuilt span { color: var(--orange); }
+.fcol h5 { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+.fcol a { display: block; font-family: var(--mono); font-size: 12px; color: var(--text2); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+.fcol a:hover { color: var(--orange); }
+.fbot { border-top: 0.5px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 10px; color: var(--text3); flex-wrap: wrap; gap: 10px; }
+.fbot a { color: var(--orange); text-decoration: none; }
+
+.div { position: relative; z-index: 1; height: 0.5px; background: var(--border2); }
+
+/* REVEAL */
+.rv { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.rv.vis { opacity: 1; transform: none; }
+.rv2 { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s; }
+.rv2.vis { opacity: 1; transform: none; }
+.rv3 { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease 0.2s, transform 0.6s ease 0.2s; }
+.rv3.vis { opacity: 1; transform: none; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  nav { padding: 0 20px; }
+  .nlinks, .btn-wallet { display: none; }
+  .nmenu { display: flex; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:nth-child(2) { border-right: none; }
+  .stat:nth-child(3), .stat:nth-child(4) { border-top: 0.5px solid var(--border2); }
+  .stat:nth-child(4) { border-right: none; }
+  .sec { padding: 60px 20px; }
+  .flow { grid-template-columns: repeat(2, 1fr); }
+  .ucgrid { grid-template-columns: repeat(2, 1fr); }
+  .why-grid { grid-template-columns: 1fr; }
+  .tvgrid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+}
+@media (max-width: 600px) {
+  .hero h1 { letter-spacing: -2px; }
+  .flow, .ucgrid, .tvgrid, .footer-grid { grid-template-columns: 1fr; }
+  .fbot { flex-direction: column; align-items: flex-start; }
+  .hero-btns { flex-direction: column; align-items: center; }
+  .hero-btns button { width: 100%; max-width: 300px; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nlogo">
+    <div class="nlogo-icon">
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+    </div>
+    <span class="nlogo-text">PRIV<span>EX</span></span>
+  </a>
+  <div class="nlinks">
+    <a href="#how">How it works</a>
+    <a href="#cases">Use cases</a>
+    <a href="#why">Why Miden</a>
+    <a href="#docs">Docs</a>
+  </div>
+  <div class="nright">
+    <button class="btn-wallet" onclick="connectWallet()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Connect Wallet
+    </button>
+    <button class="btn-theme" id="themeBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="nmenu" id="menuBtn" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+    <button class="btn-launch">Launch App</button>
+  </div>
+</nav>
+
+<div class="ndrawer" id="ndrawer">
+  <a href="#how" onclick="closeMenu()">How it works</a>
+  <a href="#cases" onclick="closeMenu()">Use cases</a>
+  <a href="#why" onclick="closeMenu()">Why Miden</a>
+  <a href="#docs" onclick="closeMenu()">Docs</a>
+  <button class="btn-wallet" style="margin-top:8px" onclick="connectWallet()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    Connect Wallet
+  </button>
+  <button class="btn-launch">Launch App</button>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow-l"></div>
+  <div class="hero-glow-r"></div>
+  <div class="hero-badge"><div class="pdot"></div>Built on Miden - Testnet Live</div>
+  <h1>Private rules.<br><span class="oa">Automatic</span><span class="dim">execution.</span></h1>
+  <p class="hero-sub">Lock assets. Set private conditions. The chain executes automatically when conditions are met - no middleman, no exposure, no trust required.</p>
+  <div class="hero-btns">
+    <button class="btn-prim">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Create Vault Rule
+    </button>
+    <button class="btn-sec">Read the Docs</button>
+  </div>
+</section>
+
+<!-- TERMINAL - generous spacing from hero bottom shadow -->
+<div class="after-hero">
+  <div class="term-wrap rv">
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dots"><div class="td r"></div><div class="td y"></div><div class="td g"></div></div>
+        <span class="term-label">Privex - vault rule - sealed</span>
+        <div class="term-live"><div class="pdot"></div>LIVE ON MIDEN TESTNET</div>
+      </div>
+      <div class="term-body">
+        <div class="tl"><span class="tp">$</span><span class="tc" id="typed-cmd"></span><span class="cursor" id="typed-cursor"></span></div>
+        <div class="tblock" id="tblock" style="opacity:0;transition:opacity 0.4s">
+          <div class="tbr"><span class="tky">asset</span><span class="tv"><span class="sv">▓▓▓▓▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">recipient</span><span class="tv">0x<span class="sv">▓▓▓▓</span>...<span class="sv">▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">condition</span><span class="tv"><span class="sv">▓▓▓▓▓▓▓▓▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">trigger</span><span class="tv">automatic</span></div>
+        </div>
+        <div id="tresults" style="opacity:0;transition:opacity 0.4s">
+          <div class="tl"><span class="tp">-&gt;</span><span class="tsu">Vault rule deployed</span><span class="tcmt">// ZK proof generated locally</span></div>
+          <div class="tl"><span class="tp">-&gt;</span><span class="tsu">Assets locked in private Note</span></div>
+          <div class="tl"><span class="tp">-&gt;</span><span class="tcmt">// Chain watches. Nobody else sees anything.</span></div>
+        </div>
+        <div class="tx-feed">
+          <div class="tx-feed-label">Live network activity</div>
+          <div class="tx-item" id="tx1"><span class="tx-hash">0x3f7a...c291</span><span class="tx-action">Vault rule created</span><span class="tx-status confirmed">confirmed</span></div>
+          <div class="tx-item" id="tx2"><span class="tx-hash">0x8b2e...f104</span><span class="tx-action">Assets locked - <span class="sv">▓▓▓▓</span> ETH</span><span class="tx-status sealed">sealed</span></div>
+          <div class="tx-item" id="tx3"><span class="tx-hash">0xd91c...7a38</span><span class="tx-action">Check-in signal sent</span><span class="tx-status confirmed">confirmed</span></div>
+          <div class="tx-item" id="tx4"><span class="tx-hash">0x12ff...8830</span><span class="tx-action">Condition evaluation</span><span class="tx-status pending">pending</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats rv" style="margin-top:80px">
+  <div class="stat"><div class="sn">100%</div><div class="sl">Private by default</div></div>
+  <div class="stat"><div class="sn">0</div><div class="sl">Middlemen needed</div></div>
+  <div class="stat"><div class="sn">ZK</div><div class="sl">Miden powered</div></div>
+  <div class="stat"><div class="sn">auto</div><div class="sl">Execution</div></div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="tdot"></span>0x3f7a...c291 vault rule created confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x9a3d...2f17 assets locked ▓▓▓▓ ETH sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x4c8b...e390 check-in signal confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x7f2a...1c84 condition triggered executing</span>
+    <span class="ticker-item"><span class="tdot"></span>0xb1d9...4a73 note released privately sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x2e5f...8b29 vault modified confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x6c4e...f201 new vault deployed confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0xd12a...9930 recipient updated sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x3f7a...c291 vault rule created confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x9a3d...2f17 assets locked ▓▓▓▓ ETH sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x4c8b...e390 check-in signal confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x7f2a...1c84 condition triggered executing</span>
+    <span class="ticker-item"><span class="tdot"></span>0xb1d9...4a73 note released privately sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x2e5f...8b29 vault modified confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x6c4e...f201 new vault deployed confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0xd12a...9930 recipient updated sealed</span>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- HOW IT WORKS -->
+<div class="sec-b">
+  <section class="sec" id="how">
+    <div class="sec-label">How it works</div>
+    <div class="sec-title rv">Four steps.<br><span>Fully private.</span></div>
+    <div class="flow rv">
+      <div class="fstep">
+        <div class="fnum">01</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="ftitle">Lock Assets</div>
+        <div class="fdesc">Connect your Miden wallet. Choose assets to lock into a private vault contract. Amounts stay hidden from everyone.</div>
+        <span class="ftag">1 transaction</span>
+      </div>
+      <div class="fstep">
+        <div class="fnum">02</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div class="ftitle">Set Conditions</div>
+        <div class="fdesc">Define your rule privately. Time-based, activity-based, or goal-based. Recipient wallets sealed inside the contract.</div>
+        <span class="ftag">sealed note</span>
+      </div>
+      <div class="fstep">
+        <div class="fnum">03</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="ftitle">Chain Watches</div>
+        <div class="fdesc">Miden contract monitors conditions silently. You check in regularly. Nobody outside sees the vault or its contents.</div>
+        <span class="ftag">recurring txns</span>
+      </div>
+      <div class="fstep">
+        <div class="fnum">04</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="ftitle">Auto Execute</div>
+        <div class="fdesc">Conditions met - assets release automatically via private Notes to recipient wallets. No manual step. No middleman.</div>
+        <span class="ftag">automatic</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="div"></div>
+
+<!-- USE CASES -->
+<div class="sec-a">
+  <section class="sec" id="cases">
+    <div class="sec-label">Use cases</div>
+    <div class="sec-title rv">Built for real<br><span>crypto scenarios.</span></div>
+    <div class="ucgrid">
+      <div class="uc rv"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l1.81-1.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div class="uc-t">The Traveller</div><div class="uc-d">Going offline for months? Set a rule - if you do not check in, assets move to your cold wallet automatically. No one monitors it for you.</div></div>
+      <div class="uc rv2"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="uc-t">Time Locked Transfer</div><div class="uc-d">Lock assets with a time condition. Releases exactly when you set it. Private, automatic, trustless.</div></div>
+      <div class="uc rv3"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="uc-t">Deal Escrow</div><div class="uc-d">Two parties in a deal. Lock funds in a Privex vault. Both confirm - funds release. No trust needed. No lawyer.</div></div>
+      <div class="uc rv"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="uc-t">Goal Based Release</div><div class="uc-d">Lock a grant or bounty. Releases automatically when a specific onchain action is verified. No committee needed.</div></div>
+      <div class="uc rv2"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><div class="uc-t">Recurring Transfers</div><div class="uc-d">Pay contributors automatically on a schedule. Nobody sees the amounts or the relationship. Fully private.</div></div>
+      <div class="uc rv3"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="uc-t">Backup Wallet Protection</div><div class="uc-d">If your main wallet goes quiet, automatically shift holdings to your backup. Private safety net with zero exposure.</div></div>
+    </div>
+  </section>
+</div>
+
+<div class="div"></div>
+
+<!-- WHY MIDEN -->
+<div class="sec-b">
+  <section class="sec" id="why">
+    <div class="sec-label">Why Miden</div>
+    <div class="sec-title rv">This only works<br><span>on Miden.</span></div>
+    <div class="why-grid rv">
+      <div class="why-points">
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><h4>Private by default</h4><p>Every vault rule, asset amount, and recipient is sealed inside a Miden Note. The chain stores only a cryptographic commitment - not the data.</p></div></div>
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><h4>Client side execution</h4><p>Transactions execute locally on your device. ZK proof sent to chain. Nobody sees your vault logic, not even the validators.</p></div></div>
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>Quantum resistant</h4><p>Built with post-quantum cryptography. Your vault rules stay safe even as quantum computing advances.</p></div></div>
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><h4>Ethereum secured</h4><p>Settled on Ethereum via Agglayer validity proofs. Miden privacy with Ethereum security underneath.</p></div></div>
+      </div>
+      <div class="ctable">
+        <div class="crow"><div class="cc hd">Feature</div><div class="cc hd">Other chains</div><div class="cc hd" style="color:var(--orange)">Privex / Miden</div></div>
+        <div class="crow"><div class="cc feat">Vault contents hidden</div><div class="cc bad">Public</div><div class="cc pvx">Sealed</div></div>
+        <div class="crow"><div class="cc feat">Recipient hidden</div><div class="cc bad">Visible</div><div class="cc pvx">Private</div></div>
+        <div class="crow"><div class="cc feat">No middleman</div><div class="cc bad">Requires trust</div><div class="cc pvx">Trustless</div></div>
+        <div class="crow"><div class="cc feat">Auto execution</div><div class="cc bad">Manual</div><div class="cc pvx">Automatic</div></div>
+        <div class="crow"><div class="cc feat">Quantum safe</div><div class="cc bad">Vulnerable</div><div class="cc pvx">Protected</div></div>
+        <div class="crow"><div class="cc feat">MEV resistant</div><div class="cc bad">Exposed</div><div class="cc pvx">Native</div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="div"></div>
+
+<!-- TX VOLUME -->
+<div class="sec-a">
+  <section class="sec">
+    <div class="sec-label">Transaction volume</div>
+    <div class="sec-title rv">Every action is<br><span>onchain.</span></div>
+    <div class="tvgrid rv">
+      <div class="tvc"><div class="tvc-h"><span>Vault creation</span><span class="stag">setup</span></div><div class="tvc-b"><div class="tvr"><span class="tva">Deploy vault contract</span><span class="tvc-count">1 tx</span></div><div class="tvr"><span class="tva">Lock assets</span><span class="tvc-count">1-5 tx</span></div><div class="tvr"><span class="tva">Set conditions</span><span class="tvc-count">1 tx</span></div><div class="tvr"><span class="tva">Add recipients</span><span class="tvc-count">1-3 tx</span></div></div><div class="tvtotal"><span class="tvtl">Per vault</span><span class="tvtn">4-10 txns</span></div></div>
+      <div class="tvc"><div class="tvc-h"><span>Active monitoring</span><span class="stag">recurring</span></div><div class="tvc-b"><div class="tvr"><span class="tva">Monthly check-in</span><span class="tvc-count">12/year</span></div><div class="tvr"><span class="tva">Modify conditions</span><span class="tvc-count">2-4 tx</span></div><div class="tvr"><span class="tva">Add assets</span><span class="tvc-count">variable</span></div><div class="tvr"><span class="tva">Update recipients</span><span class="tvc-count">1-2 tx</span></div></div><div class="tvtotal"><span class="tvtl">Per user/year</span><span class="tvtn">17-20 txns</span></div></div>
+      <div class="tvc"><div class="tvc-h"><span>Execution</span><span class="stag">automatic</span></div><div class="tvc-b"><div class="tvr"><span class="tva">Condition triggered</span><span class="tvc-count">1 tx</span></div><div class="tvr"><span class="tva">Per recipient release</span><span class="tvc-count">1-5 tx</span></div><div class="tvr"><span class="tva">Note settlement</span><span class="tvc-count">1 tx each</span></div><div class="tvr"><span class="tva">Vault close</span><span class="tvc-count">1 tx</span></div></div><div class="tvtotal"><span class="tvtl">Per execution</span><span class="tvtn">4-8 txns</span></div></div>
+    </div>
+  </section>
+</div>
+
+<!-- CTA -->
+<div class="cta-sec rv">
+  <div class="cta-glow"></div>
+  <h2>Your assets.<br><span>Your rules.</span></h2>
+  <p>Private conditions. Automatic execution. Zero middleman.</p>
+  <div class="hero-btns">
+    <button class="btn-prim"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Launch App</button>
+    <button class="btn-sec">View on GitHub</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="fbrand-logo">
+        <div class="nlogo-icon"><div class="nlogo-sq"></div><div class="nlogo-sq"></div><div class="nlogo-sq"></div><div class="nlogo-sq"></div></div>
+        <span class="nlogo-text">PRIV<span>EX</span></span>
+      </div>
+      <div class="ftag-line">Private rules. Automatic execution. Built on Miden.</div>
+      <div class="fbuilt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Built on <span>Miden</span></div>
+    </div>
+    <div class="fcol"><h5>Protocol</h5><a href="#">How it works</a><a href="#">Smart contracts</a><a href="#">Security</a><a href="#">Audits</a></div>
+    <div class="fcol"><h5>Developers</h5><a href="#">Documentation</a><a href="#">GitHub</a><a href="#">SDK</a><a href="#">Testnet faucet</a></div>
+    <div class="fcol"><h5>Community</h5><a href="#">Twitter / X</a><a href="#">Discord</a><a href="#">Telegram</a><a href="#">Blog</a></div>
+  </div>
+  <div class="fbot">
+    <span>2026 Privex Protocol. Built on <a href="https://miden.xyz" target="_blank">Miden</a>.</span>
+    <span>Private rules. Automatic execution.</span>
+  </div>
+</footer>
+
+<script>
+// NO mouse tracking - removed completely as requested
+
+// THEME
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeBtn').innerHTML = isLight
+    ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
+    : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+});
+
+function toggleMenu() { document.getElementById('ndrawer').classList.toggle('open'); }
+function closeMenu() { document.getElementById('ndrawer').classList.remove('open'); }
+function connectWallet() { alert('Wallet connection coming soon - Miden testnet wallet integration'); }
+
+// TYPING
+const cmd = 'privex create-rule --private';
+let i = 0;
+const cmdEl = document.getElementById('typed-cmd');
+function typeCmd() {
+  if (i < cmd.length) {
+    cmdEl.textContent += cmd[i++];
+    setTimeout(typeCmd, 45 + Math.random() * 35);
+  } else {
+    document.getElementById('typed-cursor').style.display = 'none';
+    setTimeout(() => {
+      document.getElementById('tblock').style.opacity = '1';
+      setTimeout(() => { document.getElementById('tresults').style.opacity = '1'; startTxFeed(); }, 500);
+    }, 350);
+  }
+}
+setTimeout(typeCmd, 700);
+
+function startTxFeed() {
+  ['tx1','tx2','tx3','tx4'].forEach((id, i) => setTimeout(() => document.getElementById(id).classList.add('show'), i * 420));
+  setTimeout(cycleTxFeed, 2600);
+}
+
+const newTxs = [
+  { hash: '0x9a3d...2f17', action: 'Vault rule modified', status: 'confirmed' },
+  { hash: '0x4c8b...e390', action: 'Assets added - \u2593\u2593\u2593\u2593 USDC', status: 'sealed' },
+  { hash: '0x7f2a...1c84', action: 'Recipient updated', status: 'confirmed' },
+  { hash: '0x2e5f...8b29', action: 'Check-in signal sent', status: 'confirmed' },
+  { hash: '0xb1d9...4a73', action: 'Condition triggered', status: 'pending' },
+  { hash: '0x6c4e...f201', action: 'Note released privately', status: 'sealed' },
+  { hash: '0xf3a1...cc82', action: 'New vault deployed', status: 'confirmed' },
+];
+let txIdx = 0;
+
+function cycleTxFeed() {
+  const feed = document.querySelectorAll('.tx-item.show');
+  if (!feed.length) return;
+  const oldest = feed[0];
+  oldest.style.opacity = '0';
+  oldest.style.transform = 'translateY(-5px)';
+  setTimeout(() => {
+    const ntx = newTxs[txIdx % newTxs.length]; txIdx++;
+    oldest.querySelector('.tx-hash').textContent = ntx.hash;
+    oldest.querySelector('.tx-action').textContent = ntx.action;
+    const st = oldest.querySelector('.tx-status');
+    st.className = 'tx-status ' + ntx.status;
+    st.textContent = ntx.status;
+    oldest.style.transition = 'none';
+    oldest.style.opacity = '0';
+    oldest.style.transform = 'translateY(7px)';
+    oldest.parentNode.appendChild(oldest);
+    requestAnimationFrame(() => {
+      oldest.style.transition = 'opacity 0.4s, transform 0.4s';
+      oldest.style.opacity = '1';
+      oldest.style.transform = 'none';
+    });
+  }, 260);
+  setTimeout(cycleTxFeed, 1900);
+}
+
+// SCROLL REVEAL
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); } });
+}, { threshold: 0.07 });
+document.querySelectorAll('.rv, .rv2, .rv3').forEach(e => obs.observe(e));
+</script>
+</body>
+</html>

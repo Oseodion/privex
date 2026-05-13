@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privex App - Vaults</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cabinet+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="app-page">
+
+<div id="app-screen-connect" class="app-screen">
+<nav>
+  <a href="index.html" class="nlogo">
+    <div class="nlogo-icon">
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+    </div>
+    <span class="nlogo-text">PRIV<span>EX</span></span>
+  </a>
+  <div class="nlinks">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#cases">Use cases</a>
+    <a href="index.html#why">Why Miden</a>
+    <a href="index.html#docs">Docs</a>
+  </div>
+  <div class="nright">
+    <button type="button" class="btn-wallet" id="btn-connect-nav">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Connect Wallet
+    </button>
+    <button class="btn-theme" id="themeBtnConnect">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="nmenu" id="menuBtnConnect"><span></span><span></span><span></span></button>
+    <a href="index.html" class="btn-launch">Home</a>
+  </div>
+</nav>
+<div class="ndrawer" id="ndrawerConnect">
+  <a href="index.html#how">How it works</a>
+  <a href="index.html#cases">Use cases</a>
+  <a href="index.html#why">Why Miden</a>
+  <a href="index.html#docs">Docs</a>
+  <button type="button" class="btn-wallet" id="btn-connect-drawer">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    Connect Wallet
+  </button>
+  <a href="index.html" class="btn-launch">Home</a>
+</div>
+<main class="app-main">
+  <div class="app-connect">
+    <div class="nlogo-icon app-connect-logo">
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+    </div>
+    <h1 class="app-page-title">Connect your Miden wallet</h1>
+    <p class="hero-sub app-connect-sub">Connect your wallet to create and manage private vaults</p>
+    <button type="button" class="btn-prim app-btn-lg" id="btn-connect-main">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Connect Wallet
+    </button>
+    <p class="app-connect-foot">Miden testnet - private by default</p>
+    <p class="app-connect-foot" id="connect-error" role="alert" hidden></p>
+  </div>
+</main>
+</div>
+
+<div id="app-screen-dashboard" class="app-screen hidden">
+<nav>
+  <a href="index.html" class="nlogo">
+    <div class="nlogo-icon">
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+    </div>
+    <span class="nlogo-text">PRIV<span>EX</span></span>
+  </a>
+  <div class="nlinks">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#cases">Use cases</a>
+    <a href="index.html#why">Why Miden</a>
+    <a href="index.html#docs">Docs</a>
+  </div>
+  <div class="nright app-nav-dash">
+    <span class="app-wallet-chip" id="wallet-chip-dash">0x1bb25f...df797</span>
+    <button type="button" class="btn-launch" id="btn-create-vault">Create New Vault</button>
+    <button class="btn-theme" id="themeBtnDash">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="nmenu" id="menuBtnDash"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="ndrawer" id="ndrawerDash">
+  <a href="index.html#how">How it works</a>
+  <a href="index.html#cases">Use cases</a>
+  <a href="index.html#why">Why Miden</a>
+  <a href="index.html#docs">Docs</a>
+  <span class="app-wallet-chip app-drawer-chip" id="wallet-chip-dash-drawer">0x1bb25f...df797</span>
+  <button type="button" class="btn-launch" id="btn-create-vault-drawer">Create New Vault</button>
+</div>
+<main class="app-main app-dash">
+  <p class="hero-sub" id="vault-message" hidden></p>
+  <div class="app-vault-list" id="vault-list">
+    <div class="app-empty" id="vault-empty">No vaults yet. Create your first vault.</div>
+    <article class="app-vault-card hidden" id="app-vault-row-template">
+      <div class="app-vault-meta">
+        <div class="app-vault-head">
+          <span class="app-status app-status-active">active</span>
+          <span class="app-vault-id">0x1bb25f...df797</span>
+        </div>
+        <div class="app-vault-grid">
+          <div><span class="app-vault-k">Last check-in</span><span class="app-vault-v">block 1,204,882</span></div>
+          <div><span class="app-vault-k">Deadline</span><span class="app-vault-v">block 1,211,200</span></div>
+        </div>
+      </div>
+      <div class="app-vault-actions">
+        <button type="button" class="btn-sec" data-vault-id="">Check In</button>
+      </div>
+    </article>
+  </div>
+</main>
+</div>
+
+<div id="app-screen-create" class="app-screen hidden">
+<nav>
+  <a href="index.html" class="nlogo">
+    <div class="nlogo-icon">
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+    </div>
+    <span class="nlogo-text">PRIV<span>EX</span></span>
+  </a>
+  <div class="nlinks">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#cases">Use cases</a>
+    <a href="index.html#why">Why Miden</a>
+    <a href="index.html#docs">Docs</a>
+  </div>
+  <div class="nright app-nav-dash">
+    <span class="app-wallet-chip" id="wallet-chip-create">0x1bb25f...df797</span>
+    <button type="button" class="btn-launch" id="btn-create-vault-create-nav">Create New Vault</button>
+    <button class="btn-theme" id="themeBtnCreate">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="nmenu" id="menuBtnCreate"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="ndrawer" id="ndrawerCreate">
+  <a href="index.html#how">How it works</a>
+  <a href="index.html#cases">Use cases</a>
+  <a href="index.html#why">Why Miden</a>
+  <a href="index.html#docs">Docs</a>
+  <span class="app-wallet-chip app-drawer-chip" id="wallet-chip-create-drawer">0x1bb25f...df797</span>
+  <button type="button" class="btn-launch" id="btn-create-vault-create-drawer">Create New Vault</button>
+</div>
+<main class="app-main app-form-wrap">
+  <div class="sec-label">New vault</div>
+  <h1 class="sec-title app-form-heading">Create a vault</h1>
+  <form class="app-form" id="vault-create-form" action="#" method="get">
+    <div class="app-field">
+      <label for="recipient">Recipient wallet address</label>
+      <input id="recipient" name="recipient" type="text" autocomplete="off" placeholder="0x...">
+    </div>
+    <div class="app-field">
+      <label for="interval">Check-in interval (blocks)</label>
+      <input id="interval" name="interval" type="text" inputmode="numeric" autocomplete="off" placeholder="7200">
+    </div>
+    <div class="app-field">
+      <label for="amount">Amount to lock</label>
+      <input id="amount" name="amount" type="text" autocomplete="off" placeholder="0.0">
+    </div>
+    <div class="app-form-actions">
+      <button class="btn-prim" type="submit" id="btn-vault-submit">Create Vault</button>
+      <button class="btn-sec" type="button" id="btn-vault-cancel">Cancel</button>
+    </div>
+  </form>
+  <p class="hero-sub" id="form-error" role="alert" hidden></p>
+</main>
+</div>
+
+<script src="../main.ts" type="module"></script>
+</body>
+</html>

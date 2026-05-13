@@ -2,6 +2,12 @@
 
 > Private automated asset control protocol built on Miden blockchain.
 
+## Links
+
+- **Live Demo:** coming soon
+- **Testnet:** Miden testnet stable 0.14.0
+- **GitHub:** https://github.com/Oseodion/privex
+
 ## The Problem
 
 Every blockchain transaction is public by default. When you move assets on

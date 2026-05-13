@@ -1,0 +1,26 @@
+# Miden wallet and keys
+.miden/
+keystore/
+*.key
+*.pem
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.testnet
+.env.production
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+target/
+
+# Cursor AI context - keep private
+.cursor/
+CLAUDE.md
+
+# Mac system files
+.DS_Store

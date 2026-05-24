@@ -3,10 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="0; url=src/ui/index.html">
-<title>Privex</title>
+<title>Privex - Private rules. Automatic execution.</title>
+<link rel="icon" href="/src/ui/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cabinet+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/src/ui/styles.css">
 </head>
 <body>
-<p><a href="src/ui/index.html">Open Privex</a></p>
+
+<nav>
+  <a href="#" class="nlogo">
+    <div class="nlogo-icon">
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+      <div class="nlogo-sq"></div><div class="nlogo-sq"></div>
+    </div>
+    <span class="nlogo-text">PRIV<span>EX</span></span>
+  </a>
+  <div class="nlinks">
+    <a href="#how">How it works</a>
+    <a href="#cases">Use cases</a>
+    <a href="#why">Why Miden</a>
+    <a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Docs</a>
+  </div>
+  <div class="nright">
+    <button class="btn-theme" id="themeBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="nmenu" id="menuBtn"><span></span><span></span><span></span></button>
+    <a href="/src/ui/app.html" class="btn-launch">Launch App</a>
+  </div>
+</nav>
+
+<div class="ndrawer" id="ndrawer">
+  <a href="#how">How it works</a>
+  <a href="#cases">Use cases</a>
+  <a href="#why">Why Miden</a>
+  <a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Docs</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow-l"></div>
+  <div class="hero-glow-r"></div>
+  <div class="hero-glow-corner"></div>
+  <div class="hero-badge"><div class="pdot"></div>Built on Miden - Testnet Live</div>
+  <h1>Private rules.<br><span class="oa">Automatic</span><span class="dim">execution.</span></h1>
+  <p class="hero-sub">Lock assets. Set private conditions. The chain executes automatically when conditions are met - no middleman, no exposure, no trust required.</p>
+  <div class="hero-btns">
+    <a href="/src/ui/app.html" class="btn-prim">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Create a Vault
+    </a>
+    <a href="https://testnet.midenscan.com/account/0x1bb25f2739ce6180529dcc939df797" target="_blank" rel="noopener noreferrer" class="btn-sec">
+      View on Testnet
+    </a>
+  </div>
+</section>
+
+<div class="after-hero">
+  <div class="term-wrap">
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dots"><div class="td r"></div><div class="td y"></div><div class="td g"></div></div>
+        <span class="term-label">Privex - vault rule - sealed</span>
+        <div class="term-live"><div class="pdot"></div>LIVE ON MIDEN TESTNET</div>
+      </div>
+      <div class="term-body">
+        <div class="tl"><span class="tp">$</span><span class="tc" id="typed-cmd"></span><span class="cursor" id="typed-cursor"></span></div>
+        <div class="tblock" id="tblock" style="opacity:0;transition:opacity 0.4s">
+          <div class="tbr"><span class="tky">asset</span><span class="tv"><span class="sv">▓▓▓▓▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">recipient</span><span class="tv">0x<span class="sv">▓▓▓▓</span>...<span class="sv">▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">condition</span><span class="tv"><span class="sv">▓▓▓▓▓▓▓▓▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">trigger</span><span class="tv">automatic</span></div>
+        </div>
+        <div id="tresults" style="opacity:0;transition:opacity 0.4s">
+          <div class="tl"><span class="tp">-&gt;</span><span class="tsu">Vault rule deployed</span><span class="tcmt">// ZK proof generated locally</span></div>
+          <div class="tl"><span class="tp">-&gt;</span><span class="tsu">Assets locked in private Note</span></div>
+          <div class="tl"><span class="tp">-&gt;</span><span class="tcmt">// Chain watches. Nobody else sees anything.</span></div>
+        </div>
+        <div class="tx-feed">
+          <div class="tx-feed-label">Live network activity</div>
+          <div class="tx-item" id="tx1"><span class="tx-hash">0x3f7a...c291</span><span class="tx-action">Vault rule created</span><span class="tx-status confirmed">confirmed</span></div>
+          <div class="tx-item" id="tx2"><span class="tx-hash">0x8b2e...f104</span><span class="tx-action">Assets locked - <span class="sv">▓▓▓▓</span> ETH</span><span class="tx-status sealed">sealed</span></div>
+          <div class="tx-item" id="tx3"><span class="tx-hash">0xd91c...7a38</span><span class="tx-action">Check-in signal sent</span><span class="tx-status confirmed">confirmed</span></div>
+          <div class="tx-item" id="tx4"><span class="tx-hash">0x12ff...8830</span><span class="tx-action">Condition evaluation</span><span class="tx-status pending">pending</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats rv">
+  <div class="stat"><div class="sn">100%</div><div class="sl">Private by default</div></div>
+  <div class="stat"><div class="sn">0</div><div class="sl">Middlemen needed</div></div>
+  <div class="stat"><div class="sn">ZK</div><div class="sl">Miden powered</div></div>
+  <div class="stat"><div class="sn">auto</div><div class="sl">Execution</div></div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="tdot"></span>0x3f7a...c291 vault rule created confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x9a3d...2f17 assets locked ▓▓▓▓ ETH sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x4c8b...e390 check-in signal confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x7f2a...1c84 condition triggered executing</span>
+    <span class="ticker-item"><span class="tdot"></span>0xb1d9...4a73 note released privately sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x2e5f...8b29 vault modified confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x6c4e...f201 new vault deployed confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0xd12a...9930 recipient updated sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x3f7a...c291 vault rule created confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x9a3d...2f17 assets locked ▓▓▓▓ ETH sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x4c8b...e390 check-in signal confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x7f2a...1c84 condition triggered executing</span>
+    <span class="ticker-item"><span class="tdot"></span>0xb1d9...4a73 note released privately sealed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x2e5f...8b29 vault modified confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0x6c4e...f201 new vault deployed confirmed</span>
+    <span class="ticker-item"><span class="tdot"></span>0xd12a...9930 recipient updated sealed</span>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- HOW IT WORKS -->
+<div class="sec-b">
+  <section class="sec" id="how">
+    <div class="sec-label">How it works</div>
+    <div class="sec-title rv">Four steps.<br><span>Fully private.</span></div>
+    <div class="flow rv">
+      <div class="fstep">
+        <div class="fnum">01</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="ftitle">Lock Assets</div>
+        <div class="fdesc">Connect your Miden wallet. Choose assets to lock into a private vault contract. Amounts stay hidden from everyone.</div>
+        <span class="ftag">1 transaction</span>
+      </div>
+      <div class="fstep">
+        <div class="fnum">02</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div class="ftitle">Set Conditions</div>
+        <div class="fdesc">Define your rule privately. Time-based, activity-based, or goal-based. Recipient wallets sealed inside the contract.</div>
+        <span class="ftag">sealed note</span>
+      </div>
+      <div class="fstep">
+        <div class="fnum">03</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="ftitle">Chain Watches</div>
+        <div class="fdesc">Miden contract monitors conditions silently. You check in regularly. Nobody outside sees the vault or its contents.</div>
+        <span class="ftag">recurring txns</span>
+      </div>
+      <div class="fstep">
+        <div class="fnum">04</div>
+        <div class="ficon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="ftitle">Auto Execute</div>
+        <div class="fdesc">Conditions met - assets release automatically via private Notes to recipient wallets. No manual step. No middleman.</div>
+        <span class="ftag">automatic</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="div"></div>
+
+<!-- USE CASES -->
+<div class="sec-a">
+  <section class="sec" id="cases">
+    <div class="sec-label">Use cases</div>
+    <div class="sec-title rv">Built for real<br><span>crypto scenarios.</span></div>
+    <div class="ucgrid">
+      <div class="uc rv"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l1.81-1.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div class="uc-t">The Traveller</div><div class="uc-d">Going offline for months? Set a rule - if you do not check in, assets move to your cold wallet automatically. No one monitors it for you.</div></div>
+      <div class="uc rv2"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="uc-t">Time Locked Transfer</div><div class="uc-d">Lock assets with a time condition. Releases exactly when you set it. Private, automatic, trustless.</div></div>
+      <div class="uc rv3"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="uc-t">Deal Escrow</div><div class="uc-d">Two parties in a deal. Lock funds in a Privex vault. Both confirm - funds release. No trust needed. No lawyer.</div></div>
+      <div class="uc rv"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="uc-t">Goal Based Release</div><div class="uc-d">Lock a grant or bounty. Releases automatically when a specific onchain action is verified. No committee needed.</div></div>
+      <div class="uc rv2"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><div class="uc-t">Recurring Transfers</div><div class="uc-d">Pay contributors automatically on a schedule. Nobody sees the amounts or the relationship. Fully private.</div></div>
+      <div class="uc rv3"><div class="uc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="uc-t">Backup Wallet Protection</div><div class="uc-d">If your main wallet goes quiet, automatically shift holdings to your backup. Private safety net with zero exposure.</div></div>
+    </div>
+  </section>
+</div>
+
+<div class="div"></div>
+
+<!-- WHY MIDEN -->
+<div class="sec-b">
+  <section class="sec" id="why">
+    <div class="sec-label">Why Miden</div>
+    <div class="sec-title rv">This only works<br><span>on Miden.</span></div>
+    <div class="why-grid rv">
+      <div class="why-points">
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><h4>Private by default</h4><p>Every vault rule, asset amount, and recipient is sealed inside a Miden Note. The chain stores only a cryptographic commitment - not the data.</p></div></div>
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><h4>Client side execution</h4><p>Transactions execute locally on your device. ZK proof sent to chain. Nobody sees your vault logic, not even the validators.</p></div></div>
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>Quantum resistant</h4><p>Built with post-quantum cryptography. Your vault rules stay safe even as quantum computing advances.</p></div></div>
+        <div class="wp"><div class="wp-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div><h4>Ethereum secured</h4><p>Settled on Ethereum via Agglayer validity proofs. Miden privacy with Ethereum security underneath.</p></div></div>
+      </div>
+      <div class="ctable">
+        <div class="crow"><div class="cc hd">Feature</div><div class="cc hd">Other chains</div><div class="cc hd orange">Privex / Miden</div></div>
+        <div class="crow"><div class="cc feat">Vault contents hidden</div><div class="cc bad">Public</div><div class="cc pvx">Sealed</div></div>
+        <div class="crow"><div class="cc feat">Recipient hidden</div><div class="cc bad">Visible</div><div class="cc pvx">Private</div></div>
+        <div class="crow"><div class="cc feat">No middleman</div><div class="cc bad">Requires trust</div><div class="cc pvx">Trustless</div></div>
+        <div class="crow"><div class="cc feat">Auto execution</div><div class="cc bad">Manual</div><div class="cc pvx">Automatic</div></div>
+        <div class="crow"><div class="cc feat">Quantum safe</div><div class="cc bad">Vulnerable</div><div class="cc pvx">Protected</div></div>
+        <div class="crow"><div class="cc feat">MEV resistant</div><div class="cc bad">Exposed</div><div class="cc pvx">Native</div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="div"></div>
+
+<!-- CTA -->
+<div class="cta-sec rv">
+  <div class="cta-glow"></div>
+  <h2>Your assets.<br><span>Your rules.</span></h2>
+  <p>Private conditions. Automatic execution. Zero middleman.</p>
+  <div class="hero-btns">
+    <a href="/src/ui/app.html" class="btn-prim"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Launch App</a>
+    <a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer" class="btn-sec">Read the Docs</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="fbrand-logo">
+        <div class="nlogo-icon"><div class="nlogo-sq"></div><div class="nlogo-sq"></div><div class="nlogo-sq"></div><div class="nlogo-sq"></div></div>
+        <span class="nlogo-text">PRIV<span>EX</span></span>
+      </div>
+      <div class="ftag-line">Private rules. Automatic execution. Built on Miden.</div>
+      <div class="fbuilt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Built on <span>Miden</span></div>
+    </div>
+    <div class="fcol"><h5>Protocol</h5><a href="#how">How it works</a><a href="https://docs.miden.xyz/builder/smart-contracts" target="_blank" rel="noopener noreferrer">Smart contracts</a><a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Security</a><a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Audits</a></div>
+    <div class="fcol"><h5>Developers</h5><a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Documentation</a><a href="https://github.com/0xMiden" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://docs.miden.xyz/builder/tools" target="_blank" rel="noopener noreferrer">SDK</a><a href="https://faucet.testnet.miden.io/" target="_blank" rel="noopener noreferrer">Testnet faucet</a></div>
+    <div class="fcol"><h5>Community</h5><a href="https://x.com/0xMiden">Twitter / X</a><a href="https://t.me/BuildOnMiden">Telegram</a></div>
+  </div>
+  <div class="fbot">
+    <span>2026 Privex Protocol. Built on <a href="https://miden.xyz" target="_blank">Miden</a>.</span>
+    <span>Private rules. Automatic execution.</span>
+  </div>
+</footer>
+
+<script src="/src/landing.ts" type="module"></script>
 </body>
 </html>

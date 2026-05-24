@@ -19,7 +19,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         home: path.resolve(repoRoot, "index.html"),
-        main: path.resolve(repoRoot, "src/ui/index.html"),
         app: path.resolve(repoRoot, "src/ui/app.html"),
       },
     },

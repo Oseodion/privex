@@ -18,7 +18,9 @@ export async function initClient(): Promise<MidenClient> {
     return midenClient;
   }
   try {
-    const client = await MidenClient.createTestnet();
+    const client = await MidenClient.createTestnet({
+      proverUrl: "testnet",
+    });
     midenClient = client;
     return client;
   } catch (err) {
@@ -72,6 +74,16 @@ export function setConnectedAccountId(accountId: string): void {
     throw new Error(
       `Could not save the account ID to browser storage. (${detail})`
     );
+  }
+}
+
+/**
+ * Clears the in-memory account id and removes it from localStorage (disconnect).
+ */
+export function clearConnectedAccount(): void {
+  connectedAccountId = null;
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem(STORAGE_KEY_ACCOUNT_ID);
   }
 }
 

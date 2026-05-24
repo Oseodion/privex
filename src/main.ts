@@ -1,6 +1,12 @@
 import { sendCheckIn } from "./checkin";
-import { createVault, getUserVaults, getVaultStatus } from "./vault";
 import {
+  createVault,
+  getUserVaults,
+  getVaultStatus,
+  isPrivateAccountLookupError,
+} from "./vault";
+import {
+  clearConnectedAccount,
   getConnectedAccountId,
   initClient,
   loadSavedAccountId,
@@ -49,19 +55,119 @@ function closeAllDrawers(): void {
 }
 
 /**
- * Shortens a Miden account id for display in the nav chip.
+ * Closes the dashboard wallet address dropdown.
  */
-function truncateAccountId(full: string): string {
+function closeWalletDropdown(): void {
+  const dropdown = queryById<HTMLElement>("wallet-dropdown-dash");
+  if (dropdown !== null) {
+    dropdown.classList.remove("open");
+  }
+  const chip = queryById<HTMLButtonElement>("wallet-chip-dash");
+  if (chip !== null) {
+    chip.setAttribute("aria-expanded", "false");
+  }
+}
+
+/** Default label on the dashboard wallet copy control. */
+const WALLET_COPY_LABEL = "Copy address";
+
+/**
+ * Dashboard wallet chip: dropdown with full address and disconnect.
+ */
+function setupWalletDropdown(): void {
+  const chip = queryById<HTMLButtonElement>("wallet-chip-dash");
+  const dropdown = queryById<HTMLElement>("wallet-dropdown-dash");
+  const copyBtn = queryById<HTMLButtonElement>("btn-wallet-copy-address");
+  const disconnectBtn = queryById<HTMLButtonElement>("btn-wallet-disconnect");
+  if (chip === null || dropdown === null) {
+    return;
+  }
+
+  chip.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const willOpen = !dropdown.classList.contains("open");
+    closeWalletDropdown();
+    if (willOpen) {
+      updateWalletDropdownAddress();
+      if (copyBtn !== null) {
+        copyBtn.textContent = WALLET_COPY_LABEL;
+      }
+      dropdown.classList.add("open");
+      chip.setAttribute("aria-expanded", "true");
+    }
+  });
+
+  if (copyBtn !== null) {
+    copyBtn.addEventListener("click", () => {
+      const id = getConnectedAccountId();
+      const fullAddress = id === null ? "" : id.trim();
+      if (fullAddress.length === 0) {
+        return;
+      }
+      void (async () => {
+        try {
+          await navigator.clipboard.writeText(fullAddress);
+          copyBtn.textContent = "Copied";
+          window.setTimeout(() => {
+            copyBtn.textContent = WALLET_COPY_LABEL;
+          }, 1500);
+        } catch {
+          /* clipboard unavailable */
+        }
+      })();
+    });
+  }
+
+  if (disconnectBtn !== null) {
+    disconnectBtn.addEventListener("click", () => {
+      clearConnectedAccount();
+      closeWalletDropdown();
+      setVaultMessage("", false);
+      setConnectError("");
+      showScreen("connect");
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    if (target.closest(".wallet-chip-wrap")) {
+      return;
+    }
+    closeWalletDropdown();
+  });
+}
+
+/**
+ * Shortens a Miden account id for nav chips: first 8 characters, ellipsis, last 4.
+ */
+function truncateAccountIdChip(full: string): string {
   const trimmed = full.trim();
   if (trimmed.length === 0) {
     return "";
   }
   const withPrefix = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
-  const body = withPrefix.slice(2);
-  if (body.length <= 10) {
+  if (withPrefix.length <= 14) {
     return withPrefix;
   }
-  return `${withPrefix.slice(0, 8)}...${body.slice(-4)}`;
+  return `${withPrefix.slice(0, 8)}...${withPrefix.slice(-4)}`;
+}
+
+/**
+ * Shortens a Miden account id on the dashboard welcome line: first 10, last 6.
+ */
+function truncateAccountIdDashboard(full: string): string {
+  const trimmed = full.trim();
+  if (trimmed.length === 0) {
+    return "";
+  }
+  const withPrefix = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+  if (withPrefix.length <= 18) {
+    return withPrefix;
+  }
+  return `${withPrefix.slice(0, 10)}...${withPrefix.slice(-6)}`;
 }
 
 /**
@@ -69,8 +175,8 @@ function truncateAccountId(full: string): string {
  */
 function updateWalletChips(): void {
   const id = getConnectedAccountId();
-  const label = id === null || id.length === 0 ? "" : truncateAccountId(id);
-  const chips: Array<string | null> = [
+  const label = id === null || id.length === 0 ? "" : truncateAccountIdChip(id);
+  const chips: readonly string[] = [
     "wallet-chip-dash",
     "wallet-chip-dash-drawer",
     "wallet-chip-create",
@@ -82,6 +188,36 @@ function updateWalletChips(): void {
       chip.textContent = label.length > 0 ? label : "0x0000...0000";
     }
   }
+  updateDashboardWelcome();
+  updateWalletDropdownAddress();
+}
+
+/**
+ * Fills the dashboard wallet dropdown with the full account id for viewing and copy.
+ */
+function updateWalletDropdownAddress(): void {
+  const addrEl = queryById<HTMLElement>("wallet-dropdown-dash-addr");
+  if (addrEl === null) {
+    return;
+  }
+  const id = getConnectedAccountId();
+  addrEl.textContent = id === null || id.trim().length === 0 ? "" : id.trim();
+}
+
+/**
+ * Shows the full connected wallet id on the dashboard welcome line.
+ */
+function updateDashboardWelcome(): void {
+  const el = queryById<HTMLElement>("dashboard-wallet-id");
+  if (el === null) {
+    return;
+  }
+  const id = getConnectedAccountId();
+  if (id === null || id.trim().length === 0) {
+    el.textContent = "not connected";
+    return;
+  }
+  el.textContent = truncateAccountIdDashboard(id);
 }
 
 /**
@@ -100,36 +236,6 @@ function applySavedTheme(): void {
 }
 
 /**
- * Flips light mode and remembers the choice for the next visit.
- */
-function toggleTheme(): void {
-  document.body.classList.toggle("light");
-  if (typeof localStorage === "undefined") {
-    return;
-  }
-  const next = document.body.classList.contains("light")
-    ? THEME_LIGHT
-    : THEME_DARK;
-  localStorage.setItem(THEME_STORAGE_KEY, next);
-}
-
-/**
- * Wires the sun or moon buttons on every screen to the same theme handler.
- */
-function setupThemeToggles(): void {
-  const ids = ["themeBtnConnect", "themeBtnDash", "themeBtnCreate"];
-  for (const id of ids) {
-    const btn = queryById<HTMLButtonElement>(id);
-    if (btn === null) {
-      continue;
-    }
-    btn.addEventListener("click", () => {
-      toggleTheme();
-    });
-  }
-}
-
-/**
  * Opens or closes one drawer when its hamburger button is pressed.
  */
 function setupDrawerToggle(
@@ -141,27 +247,44 @@ function setupDrawerToggle(
   if (menuBtn === null || drawer === null) {
     return;
   }
-  menuBtn.addEventListener("click", () => {
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.querySelectorAll(".ndrawer.open").forEach((openDrawer) => {
+      if (openDrawer !== drawer) {
+        openDrawer.classList.remove("open");
+      }
+    });
     drawer.classList.toggle("open");
   });
-  drawer.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
+  drawer.addEventListener("click", (e) => {
+    const target = e.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    if (target.closest("a") !== null || target.closest("button") !== null) {
       drawer.classList.remove("open");
-    });
+    }
   });
 }
 
+/** Pairs each app screen hamburger button id with its mobile drawer id (see app.html). */
+const APP_MENU_DRAWER_PAIRS: ReadonlyArray<[string, string]> = [
+  ["menuBtnConnect", "ndrawerConnect"],
+  ["menuBtnDash", "ndrawerDash"],
+  ["menuBtnCreate", "ndrawerCreate"],
+];
+
 /**
- * Registers all hamburger menu pairs for the three layouts.
+ * Registers all hamburger menu pairs for the three app screens.
  */
 function setupMobileMenus(): void {
-  setupDrawerToggle("menuBtnConnect", "ndrawerConnect");
-  setupDrawerToggle("menuBtnDash", "ndrawerDash");
-  setupDrawerToggle("menuBtnCreate", "ndrawerCreate");
+  for (const [menuId, drawerId] of APP_MENU_DRAWER_PAIRS) {
+    setupDrawerToggle(menuId, drawerId);
+  }
 }
 
 /**
- * Shows a short message under the connect hero, or hides it when text is empty.
+ * Shows a message under the connect hero, or hides it when text is empty.
  */
 function setConnectError(message: string): void {
   const el = queryById<HTMLElement>("connect-error");
@@ -175,6 +298,11 @@ function setConnectError(message: string): void {
   }
   el.textContent = message;
   el.removeAttribute("hidden");
+}
+
+/** Alias used by the Miden extension connect path for user-facing errors. */
+function showConnectError(message: string): void {
+  setConnectError(message);
 }
 
 /**
@@ -191,6 +319,27 @@ function setVaultMessage(message: string, show: boolean): void {
   } else {
     el.setAttribute("hidden", "");
   }
+}
+
+/** Shown while createVault is proving and submitting on testnet (1-3 minutes). */
+const VAULT_CREATE_PENDING_MESSAGE =
+  "Creating vault on Miden testnet. ZK proof is being generated. This takes 1-3 minutes. Please wait...";
+
+/**
+ * Shows or hides the in-progress message under the create vault form.
+ */
+function setVaultCreateStatus(message: string): void {
+  const el = queryById<HTMLElement>("form-status");
+  if (el === null) {
+    return;
+  }
+  if (message.length === 0) {
+    el.textContent = "";
+    el.setAttribute("hidden", "");
+    return;
+  }
+  el.textContent = message;
+  el.removeAttribute("hidden");
 }
 
 /**
@@ -240,7 +389,7 @@ async function loadUserVaults(): Promise<void> {
 
       const idSpan = card.querySelector(".app-vault-id");
       if (idSpan !== null) {
-        idSpan.textContent = truncateAccountId(vaultId);
+        idSpan.textContent = truncateAccountIdChip(vaultId);
       }
 
       const statusEl = card.querySelector(".app-status");
@@ -287,6 +436,11 @@ async function loadUserVaults(): Promise<void> {
       list.appendChild(card);
     }
   } catch (err) {
+    if (isPrivateAccountLookupError(err)) {
+      emptyEl.removeAttribute("hidden");
+      setVaultMessage("", false);
+      return;
+    }
     emptyEl.setAttribute("hidden", "");
     const message =
       err instanceof Error ? err.message : "Could not load your vault list.";
@@ -295,32 +449,116 @@ async function loadUserVaults(): Promise<void> {
 }
 
 /**
- * Runs the connect flow: SDK init, manual account id entry, then dashboard.
+ * Persists the account id, refreshes UI, opens the dashboard, and loads vaults.
  */
-async function handleConnectWallet(button: HTMLButtonElement): Promise<void> {
+async function finishConnectWithAccountId(accountId: string): Promise<void> {
+  setConnectedAccountId(accountId);
+  updateWalletChips();
+  showScreen("dashboard");
+  setVaultMessage("", false);
+  await loadUserVaults();
+}
+
+/**
+ * Reads account id from the extension object after connect().
+ */
+function readMidenWalletAccountId(wallet: {
+  address?: string;
+  permission?: { address?: string };
+}): string {
+  if (typeof wallet.address === "string" && wallet.address.trim().length > 0) {
+    return wallet.address.trim();
+  }
+  const fromPermission = wallet.permission?.address;
+  if (
+    typeof fromPermission === "string" &&
+    fromPermission.trim().length > 0
+  ) {
+    return fromPermission.trim();
+  }
+  return "";
+}
+
+/**
+ * Connects through `window.midenWallet` when the Miden Wallet extension is present.
+ */
+async function handleConnectWalletExtension(): Promise<void> {
+  const w = window as {
+    midenWallet?: {
+      connect?: (permission: string, network: string) => Promise<unknown>;
+      address?: string;
+      permission?: { address?: string };
+    };
+  };
+  if (w.midenWallet && typeof w.midenWallet.connect === "function") {
+    try {
+      await initClient();
+      await w.midenWallet.connect("UPON_REQUEST", "testnet");
+      const accountId = readMidenWalletAccountId(w.midenWallet);
+      if (accountId.length > 0) {
+        await finishConnectWithAccountId(accountId);
+        return;
+      }
+      showConnectError(
+        "Wallet did not return an account id. Use manual entry below."
+      );
+      return;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showConnectError("Wallet connection failed: " + msg);
+      return;
+    }
+  }
+  showConnectError(
+    "Miden Wallet extension not detected. Install it from the Chrome Web Store or use your account ID below."
+  );
+}
+
+/**
+ * Runs the extension connect flow and restores the primary button label.
+ */
+async function runExtensionConnectWithButton(
+  button: HTMLButtonElement
+): Promise<void> {
+  const originalHtml = button.innerHTML;
+  button.disabled = true;
+  button.textContent = "Connecting...";
+  setConnectError("");
+  try {
+    await handleConnectWalletExtension();
+  } finally {
+    button.disabled = false;
+    button.innerHTML = originalHtml;
+  }
+}
+
+/**
+ * Uses the manual account id field and the same post-connect steps as the extension path.
+ */
+async function handleManualAccountConnect(
+  button: HTMLButtonElement
+): Promise<void> {
+  const input = queryById<HTMLInputElement>("connect-account-id");
   const originalHtml = button.innerHTML;
   button.disabled = true;
   button.textContent = "Connecting...";
   setConnectError("");
   try {
     await initClient();
-    const entered = window.prompt(
-      "Enter your Miden account ID (hex, starting with 0x):"
-    );
-    if (entered === null) {
-      setConnectError("Connection cancelled. You can try again when you are ready.");
+    if (input === null) {
+      setConnectError(
+        "The connect form is incomplete. Please refresh the page."
+      );
       return;
     }
-    const trimmed = entered.trim();
+    const trimmed = input.value.trim();
     if (trimmed.length === 0) {
-      setConnectError("No account id was entered. Please enter a valid Miden account id.");
+      setConnectError(
+        "Enter your Miden account id in the field above, then tap Connect with Account ID."
+      );
       return;
     }
-    setConnectedAccountId(trimmed);
-    updateWalletChips();
-    showScreen("dashboard");
-    setVaultMessage("", false);
-    await loadUserVaults();
+    await finishConnectWithAccountId(trimmed);
   } catch (err) {
     const message =
       err instanceof Error
@@ -334,17 +572,19 @@ async function handleConnectWallet(button: HTMLButtonElement): Promise<void> {
 }
 
 /**
- * Attaches the connect wallet behavior to every connect entry point.
+ * Wires the primary extension button and manual connect.
  */
 function setupConnectButtons(): void {
-  const ids = ["btn-connect-nav", "btn-connect-drawer", "btn-connect-main"];
-  for (const id of ids) {
-    const btn = queryById<HTMLButtonElement>(id);
-    if (btn === null) {
-      continue;
-    }
-    btn.addEventListener("click", () => {
-      void handleConnectWallet(btn);
+  const extBtn = queryById<HTMLButtonElement>("btn-connect-miden-extension");
+  if (extBtn !== null) {
+    extBtn.addEventListener("click", () => {
+      void runExtensionConnectWithButton(extBtn);
+    });
+  }
+  const accountIdBtn = queryById<HTMLButtonElement>("btn-connect-account-id");
+  if (accountIdBtn !== null) {
+    accountIdBtn.addEventListener("click", () => {
+      void handleManualAccountConnect(accountIdBtn);
     });
   }
 }
@@ -356,6 +596,7 @@ function setupCreateVaultButtons(): void {
   const ids = [
     "btn-create-vault",
     "btn-create-vault-drawer",
+    "btn-create-vault-empty",
     "btn-create-vault-create-nav",
     "btn-create-vault-create-drawer",
   ];
@@ -366,6 +607,7 @@ function setupCreateVaultButtons(): void {
     }
     btn.addEventListener("click", () => {
       setFormError("");
+      setVaultCreateStatus("");
       showScreen("create");
     });
   }
@@ -381,6 +623,7 @@ function setupCancelButton(): void {
   }
   btn.addEventListener("click", () => {
     setFormError("");
+    setVaultCreateStatus("");
     showScreen("dashboard");
   });
 }
@@ -397,6 +640,7 @@ function setupVaultFormSubmit(): void {
     event.preventDefault();
     void (async () => {
       setFormError("");
+      setVaultCreateStatus(VAULT_CREATE_PENDING_MESSAGE);
       const recipientInput = queryById<HTMLInputElement>("recipient");
       const intervalInput = queryById<HTMLInputElement>("interval");
       const amountInput = queryById<HTMLInputElement>("amount");
@@ -405,6 +649,7 @@ function setupVaultFormSubmit(): void {
         intervalInput === null ||
         amountInput === null
       ) {
+        setVaultCreateStatus("");
         setFormError("The form is missing required fields. Please refresh the page.");
         return;
       }
@@ -413,9 +658,11 @@ function setupVaultFormSubmit(): void {
       const amount = Number(amountInput.value.trim());
       try {
         await createVault(recipient, interval, amount);
+        setVaultCreateStatus("");
         showScreen("dashboard");
         await loadUserVaults();
       } catch (err) {
+        setVaultCreateStatus("");
         const message =
           err instanceof Error
             ? err.message
@@ -466,8 +713,8 @@ function setupVaultListDelegation(): void {
  * Registers every interactive control after the DOM is ready.
  */
 function setupAllHandlers(): void {
-  setupThemeToggles();
   setupMobileMenus();
+  setupWalletDropdown();
   setupConnectButtons();
   setupCreateVaultButtons();
   setupCancelButton();
@@ -476,24 +723,14 @@ function setupAllHandlers(): void {
 }
 
 /**
- * First paint: start the SDK, restore session and theme, then show the right screen.
+ * Picks connect vs dashboard from saved account id only. Does not init the Miden client
+ * so page load and click handlers are never blocked by RPC or WASM startup.
  */
 async function bootstrap(): Promise<void> {
-  applySavedTheme();
   setConnectError("");
   setFormError("");
+  setVaultCreateStatus("");
   setVaultMessage("", false);
-  let clientReady = false;
-  try {
-    await initClient();
-    clientReady = true;
-  } catch (err) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : "Could not reach the Miden testnet client.";
-    setConnectError(message);
-  }
   let savedAccountReady = false;
   try {
     const saved = loadSavedAccountId();
@@ -505,16 +742,59 @@ async function bootstrap(): Promise<void> {
         : "Could not read your saved wallet from this browser.";
     setConnectError(message);
   }
-  if (clientReady && savedAccountReady) {
+  if (savedAccountReady) {
     updateWalletChips();
     showScreen("dashboard");
-    await loadUserVaults();
   } else {
     showScreen("connect");
   }
-  setupAllHandlers();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+/**
+ * Runs init when the DOM is ready. Module scripts often load after DOMContentLoaded
+ * has already fired, so a listener alone would never run.
+ */
+function runWhenDocumentReady(run: () => void): void {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run, { once: true });
+    return;
+  }
+  run();
+}
+
+/**
+ * Wires theme, handlers, and initial screen after the document is interactive.
+ */
+function initApp(): void {
+  applySavedTheme();
+
+  document.addEventListener("click", (e: MouseEvent) => {
+    const target = e.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    if (
+      target.closest("#themeBtnConnect") ||
+      target.closest("#themeBtnDash") ||
+      target.closest("#themeBtnCreate") ||
+      target.closest(".btn-theme")
+    ) {
+      document.body.classList.toggle("light");
+      const theme = document.body.classList.contains("light")
+        ? THEME_LIGHT
+        : THEME_DARK;
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
+      }
+    }
+  });
+
+  setConnectError("");
+  setFormError("");
+  setVaultCreateStatus("");
+  setVaultMessage("", false);
+  setupAllHandlers();
   void bootstrap();
-});
+}
+
+runWhenDocumentReady(initApp);

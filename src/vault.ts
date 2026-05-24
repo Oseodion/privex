@@ -3,7 +3,25 @@ import type {
   AccountStorage,
   MidenClient,
 } from "@miden-sdk/miden-sdk";
-import { getClient, getConnectedAccountId } from "./wallet";
+import {
+  AccountComponent,
+  AccountId,
+  AccountType,
+  AdviceMap,
+  AuthSecretKey,
+  Felt,
+  FeltArray,
+  Package,
+  StorageMap,
+  StorageSlot,
+  StorageSlotArray,
+  TransactionRequestBuilder,
+  TransactionScript,
+  TransactionRequest,
+  TransactionProver,
+  Word,
+} from "@miden-sdk/miden-sdk";
+import { getClient, getConnectedAccountId, initClient } from "./wallet";
 
 /**
  * Deployed Privex vault template account on Miden testnet.
@@ -11,6 +29,65 @@ import { getClient, getConnectedAccountId } from "./wallet";
  */
 export const VAULT_CONTRACT_ACCOUNT_ID =
   "0x1bb25f2739ce6180529dcc939df797";
+
+/** Path to the compiled vault account package served by Vite from the repo root. */
+const VAULT_ACCOUNT_MASP_URL = "/src/assets/vault_account.masp";
+
+/** Path to the init transaction script package served by Vite from the repo root. */
+const VAULT_INIT_MASP_URL = "/src/assets/vault_init.masp";
+
+/**
+ * Advice-map key for init_vault parameters. Must match vault-init-tx/src/lib.rs
+ * (Word::from([0, 0, 0, 1])).
+ */
+const VAULT_INIT_ADVICE_KEY = Word.newFromFelts([
+  new Felt(0n),
+  new Felt(0n),
+  new Felt(0n),
+  new Felt(1n),
+]);
+
+/** Storage slot name for the vault contract map (see rust-sdk-pitfalls P5). */
+const VAULT_MAP_SLOT_NAME = "miden_vault_account::vault_contract::vault_map";
+
+/**
+ * Returns the connected Miden client, initializing testnet if the page was
+ * refreshed with a saved account but initClient was not run yet.
+ */
+async function getOrInitClient(): Promise<MidenClient> {
+  try {
+    return getClient();
+  } catch {
+    return initClient();
+  }
+}
+
+/**
+ * Creates a new remote prover for each transaction submit. The SDK can fall
+ * back to local proving if a prover handle is reused after WASM consumes it.
+ */
+function createFreshTestnetRemoteProver(): TransactionProver {
+  return TransactionProver.newRemoteProver(
+    "https://tx-prover.testnet.miden.io",
+    300_000n
+  );
+}
+
+/**
+ * Submits a transaction with a fresh testnet remote prover on every call.
+ */
+async function submitWithFreshTestnetProver(
+  client: MidenClient,
+  account: Parameters<MidenClient["transactions"]["submit"]>[0],
+  request: TransactionRequest
+): Promise<Awaited<ReturnType<MidenClient["transactions"]["submit"]>>> {
+  const remoteProver = createFreshTestnetRemoteProver();
+  return client.transactions.submit(account, request, {
+    waitForConfirmation: true,
+    timeout: 300_000,
+    prover: remoteProver,
+  });
+}
 
 /**
  * Shape of vault status returned to the UI.
@@ -31,8 +108,96 @@ function normalizeAccountIdHex(value: string): string {
 }
 
 /**
+ * Loads a compiled Miden package (.masp) over HTTP from the app assets folder.
+ */
+async function fetchMaspPackage(url: string, label: string): Promise<Package> {
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Could not reach ${label} at ${url}. Is the dev server running? (${detail})`
+    );
+  }
+  if (!response.ok) {
+    throw new Error(
+      `Could not load ${label} (${response.status} ${response.statusText}). ` +
+        `Expected the file at ${url}. Run the vault-contract build and copy the .masp into src/assets/.`
+    );
+  }
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes.length === 0) {
+    throw new Error(`The ${label} file at ${url} is empty. Rebuild and copy the .masp artifact.`);
+  }
+  return Package.deserialize(bytes);
+}
+
+/**
+ * Parses a connected account id string into an AccountId (hex or bech32).
+ */
+function parseAccountId(value: string, label: string): AccountId {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    throw new Error(`${label} is required.`);
+  }
+  try {
+    if (trimmed.startsWith("0x") || trimmed.startsWith("0X")) {
+      return AccountId.fromHex(trimmed);
+    }
+    return AccountId.fromBech32(trimmed);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`Invalid ${label}: ${detail}`);
+  }
+}
+
+/**
+ * Converts an AccountId to a Word for the vault contract (owner / recipient args).
+ */
+function accountIdToWord(accountId: AccountId): Word {
+  try {
+    return Word.fromHex(accountId.toString());
+  } catch {
+    return Word.newFromFelts([
+      accountId.prefix(),
+      accountId.suffix(),
+      new Felt(0n),
+      new Felt(0n),
+    ]);
+  }
+}
+
+/**
+ * Builds the advice-map payload read by vault-init-tx: owner word, recipient word,
+ * then interval in the first felt of the third word.
+ */
+function buildInitAdviceFelts(
+  owner: Word,
+  recipient: Word,
+  intervalBlocks: number
+): Felt[] {
+  const ownerFelts = owner.toFelts();
+  const recipientFelts = recipient.toFelts();
+  const interval = new Felt(BigInt(Math.trunc(intervalBlocks)));
+  return [
+    ownerFelts[0],
+    ownerFelts[1],
+    ownerFelts[2],
+    ownerFelts[3],
+    recipientFelts[0],
+    recipientFelts[1],
+    recipientFelts[2],
+    recipientFelts[3],
+    interval,
+    new Felt(0n),
+    new Felt(0n),
+    new Felt(0n),
+  ];
+}
+
+/**
  * Reads a single-word storage slot if a matching slot name exists.
- * TODO: Confirm exact slot names exported by the Privex vault contract after reviewing its MASM.
  */
 function readWordSlot(
   storage: AccountStorage,
@@ -89,25 +254,67 @@ export async function createVault(
       throw new Error("Amount to lock must be a positive number.");
     }
 
-    const client: MidenClient = getClient();
+    const ownerIdStr = getConnectedAccountId();
+    if (ownerIdStr === null || ownerIdStr.trim().length === 0) {
+      throw new Error(
+        "No connected wallet. Connect your account before creating a vault."
+      );
+    }
+
+    const client = await getOrInitClient();
     await client.sync();
 
-    // TODO: Load the compiled vault package or library that matches the deployed template.
-    // TODO: Build AccountComponent instances (auth + vault code) required by accounts.create.
-    // TODO: Call client.accounts.create with ContractCreateOptions (seed, auth, components).
-    // TODO: Submit the init_vault transaction with owner, recipient, and interval arguments.
-    // TODO: Verify argument order and types against the contract ABI in the Miden SDK and on-chain account.
+    const ownerId = parseAccountId(ownerIdStr, "Owner account");
+    const recipientId = parseAccountId(trimmedRecipient, "Recipient account");
+    const ownerWord = accountIdToWord(ownerId);
+    const recipientWord = accountIdToWord(recipientId);
 
-    throw new Error(
-      "Vault creation is not implemented yet. Wire accounts.create and the init_vault transaction to the Privex contract using the Miden SDK, then remove this error."
+    const vaultPkg = await fetchMaspPackage(
+      VAULT_ACCOUNT_MASP_URL,
+      "vault account package"
     );
+    const vaultMap = new StorageMap();
+    const vaultComponent = AccountComponent.fromPackage(vaultPkg, new StorageSlotArray([
+      StorageSlot.map(VAULT_MAP_SLOT_NAME, vaultMap),
+    ]));
+
+    const seed = crypto.getRandomValues(new Uint8Array(32));
+    const auth = AuthSecretKey.rpoFalconWithRNG(seed);
+    const vaultAccount = await client.accounts.create({
+      type: AccountType.RegularAccountImmutableCode,
+      seed,
+      auth,
+      components: [vaultComponent],
+      storage: "private",
+    });
+
+    const initPkg = await fetchMaspPackage(VAULT_INIT_MASP_URL, "vault init script");
+    const txScript = TransactionScript.fromPackage(initPkg);
+
+    const adviceMap = new AdviceMap();
+    const initFelts = buildInitAdviceFelts(ownerWord, recipientWord, interval);
+    adviceMap.insert(VAULT_INIT_ADVICE_KEY, new FeltArray(initFelts));
+
+    // transactions.execute does not expose advice-map inputs; submit a built request instead.
+    const request: TransactionRequest = new TransactionRequestBuilder()
+      .withCustomScript(txScript)
+      .extendAdviceMap(adviceMap)
+      .build();
+
+    const remoteProver = TransactionProver.newRemoteProver(
+      "https://tx-prover.testnet.miden.io",
+      300_000n
+    );
+    await client.transactions.submit(vaultAccount, request, {
+      waitForConfirmation: true,
+      timeout: 300_000,
+      prover: remoteProver,
+    });
+
+    await client.sync();
+
+    return vaultAccount.id().toString();
   } catch (err) {
-    if (
-      err instanceof Error &&
-      err.message.startsWith("Vault creation is not implemented yet")
-    ) {
-      throw err;
-    }
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(`Could not create a vault. ${detail}`);
   }
@@ -125,13 +332,12 @@ export async function getVaultStatus(
       throw new Error("Vault account id is required.");
     }
 
-    const client: MidenClient = getClient();
+    const client = await getOrInitClient();
     await client.sync();
 
     const details = await client.accounts.getDetails(trimmedId);
     const storage = details.storage;
 
-    // TODO: Replace candidate slot name lists with the exact names from the Privex vault contract.
     const statusHex = readWordSlot(storage, [
       "status",
       "vault_status",
@@ -178,22 +384,13 @@ export async function checkIn(vaultAccountId: string): Promise<string> {
       );
     }
 
-    const client: MidenClient = getClient();
+    const client = await getOrInitClient();
     await client.sync();
 
-    // TODO: Compile a transaction script that calls the vault account's check_in entrypoint.
-    // TODO: Confirm whether the executing account should be the owner wallet or the vault itself.
-    // TODO: Link the correct MASM libraries from the vault account component when calling client.compile.txScript.
-    // const script = await client.compile.txScript({ code: "...", libraries: [...] });
-    // const { txId } = await client.transactions.execute({
-    //   account: ownerId,
-    //   script,
-    //   foreignAccounts: [trimmedVault],
-    // });
-    // return txId.toHex();
-
     throw new Error(
-      "Check-in is not implemented yet. Compile the check_in transaction script and submit it with transactions.execute, then remove this error."
+      "Check-in is not implemented yet. Build the check_in transaction script, " +
+        "then submit it with submitWithFreshTestnetProver(client, account, request) " +
+        "so each transaction uses a fresh remote testnet prover."
     );
   } catch (err) {
     if (
@@ -208,11 +405,26 @@ export async function checkIn(vaultAccountId: string): Promise<string> {
 }
 
 /**
+ * True when the network refuses to return details for a private account.
+ * Expected for the deployed private vault template; not a user-facing failure.
+ */
+export function isPrivateAccountLookupError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("private") &&
+    (lower.includes("cannot be retrieved") ||
+      lower.includes("details cannot"))
+  );
+}
+
+/**
  * Lists local accounts whose code matches the deployed vault template (excluding the template id).
+ * Returns an empty list when the template is private and cannot be read from the network.
  */
 export async function getUserVaults(): Promise<string[]> {
   try {
-    const client: MidenClient = getClient();
+    const client = await getOrInitClient();
     await client.sync();
 
     const templateAccount = await client.accounts.getOrImport(
@@ -236,6 +448,9 @@ export async function getUserVaults(): Promise<string[]> {
 
     return result;
   } catch (err) {
+    if (isPrivateAccountLookupError(err)) {
+      return [];
+    }
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(`Could not list vault accounts. ${detail}`);
   }

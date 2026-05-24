@@ -12,6 +12,8 @@
 <body class="app-page">
 
 <div id="app-screen-connect" class="app-screen">
+<div class="app-bg-grid"></div>
+<div class="app-bg-glow"></div>
 <nav>
   <a href="index.html" class="nlogo">
     <div class="nlogo-icon">
@@ -27,10 +29,6 @@
     <a href="index.html#docs">Docs</a>
   </div>
   <div class="nright">
-    <button type="button" class="btn-wallet" id="btn-connect-nav">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      Connect Wallet
-    </button>
     <button class="btn-theme" id="themeBtnConnect">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     </button>
@@ -43,11 +41,6 @@
   <a href="index.html#cases">Use cases</a>
   <a href="index.html#why">Why Miden</a>
   <a href="index.html#docs">Docs</a>
-  <button type="button" class="btn-wallet" id="btn-connect-drawer">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-    Connect Wallet
-  </button>
-  <a href="index.html" class="btn-launch">Home</a>
 </div>
 <main class="app-main">
   <div class="app-connect">
@@ -57,10 +50,30 @@
     </div>
     <h1 class="app-page-title">Connect your Miden wallet</h1>
     <p class="hero-sub app-connect-sub">Connect your wallet to create and manage private vaults</p>
-    <button type="button" class="btn-prim app-btn-lg" id="btn-connect-main">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      Connect Wallet
-    </button>
+    <div class="app-connect-stack">
+      <section class="app-connect-primary">
+        <button type="button" class="btn-prim app-btn-lg" id="btn-connect-miden-extension">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Connect Miden Wallet
+        </button>
+        <p class="app-connect-extension-hint">Recommended - requires Miden Wallet Chrome extension</p>
+        <p class="app-connect-extension-link"><a href="https://miden.xyz/wallet" target="_blank" rel="noopener noreferrer">Get the Miden Wallet extension</a></p>
+      </section>
+      <div class="app-connect-divider" role="presentation">
+        <span class="app-connect-divider-line" aria-hidden="true"></span>
+        <span class="app-connect-divider-text">Developer access</span>
+        <span class="app-connect-divider-line" aria-hidden="true"></span>
+      </div>
+      <section class="app-connect-developer">
+        <p class="app-connect-developer-note">For CLI wallet holders and developers only</p>
+        <div class="app-field app-connect-field">
+          <label for="connect-account-id">Account ID</label>
+          <input id="connect-account-id" name="connect-account-id" type="text" autocomplete="off" placeholder="Your Miden account ID looks like: 0x8a149e66015e5b8054d648a6bc80d4">
+        </div>
+        <button type="button" class="btn-sec" id="btn-connect-account-id">Connect with Account ID</button>
+        <p class="app-connect-developer-warning">Read-only access. Transaction signing requires the Chrome extension.</p>
+      </section>
+    </div>
     <p class="app-connect-foot">Miden testnet - private by default</p>
     <p class="app-connect-foot" id="connect-error" role="alert" hidden></p>
   </div>
@@ -68,6 +81,8 @@
 </div>
 
 <div id="app-screen-dashboard" class="app-screen hidden">
+<div class="app-bg-grid"></div>
+<div class="app-bg-glow"></div>
 <nav>
   <a href="index.html" class="nlogo">
     <div class="nlogo-icon">
@@ -83,7 +98,15 @@
     <a href="index.html#docs">Docs</a>
   </div>
   <div class="nright app-nav-dash">
-    <span class="app-wallet-chip" id="wallet-chip-dash">0x1bb25f...df797</span>
+    <div class="wallet-chip-wrap" id="wallet-chip-dash-wrap">
+      <button type="button" class="btn-wallet" id="wallet-chip-dash" aria-expanded="false" aria-haspopup="true">0x1bb25f...df797</button>
+      <div class="wallet-dropdown" id="wallet-dropdown-dash" role="menu">
+        <div class="wallet-dropdown-label">Wallet address</div>
+        <div class="wallet-dropdown-addr" id="wallet-dropdown-dash-addr"></div>
+        <button type="button" class="wallet-copy-btn" id="btn-wallet-copy-address">Copy address</button>
+        <button type="button" class="wallet-disconnect-btn" id="btn-wallet-disconnect">Disconnect</button>
+      </div>
+    </div>
     <button type="button" class="btn-launch" id="btn-create-vault">Create New Vault</button>
     <button class="btn-theme" id="themeBtnDash">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -100,9 +123,17 @@
   <button type="button" class="btn-launch" id="btn-create-vault-drawer">Create New Vault</button>
 </div>
 <main class="app-main app-dash">
+  <header class="app-dash-header">
+    <div class="sec-label">Dashboard</div>
+    <h1 class="app-dash-title">Your vaults</h1>
+    <p class="hero-sub app-dash-welcome">Connected as <span class="app-dash-welcome-id" id="dashboard-wallet-id">0x0000...0000</span></p>
+  </header>
   <p class="hero-sub" id="vault-message" hidden></p>
   <div class="app-vault-list" id="vault-list">
-    <div class="app-empty" id="vault-empty">No vaults yet. Create your first vault.</div>
+    <div class="app-empty" id="vault-empty">
+      <p class="app-empty-text">No vaults found. Create your first vault to get started.</p>
+      <button type="button" class="btn-prim app-btn-lg" id="btn-create-vault-empty">Create New Vault</button>
+    </div>
     <article class="app-vault-card hidden" id="app-vault-row-template">
       <div class="app-vault-meta">
         <div class="app-vault-head">
@@ -123,6 +154,8 @@
 </div>
 
 <div id="app-screen-create" class="app-screen hidden">
+<div class="app-bg-grid"></div>
+<div class="app-bg-glow"></div>
 <nav>
   <a href="index.html" class="nlogo">
     <div class="nlogo-icon">
@@ -175,10 +208,11 @@
       <button class="btn-sec" type="button" id="btn-vault-cancel">Cancel</button>
     </div>
   </form>
+  <p class="app-vault-pending" id="form-status" role="status" hidden></p>
   <p class="hero-sub" id="form-error" role="alert" hidden></p>
 </main>
 </div>
 
-<script src="../main.ts" type="module"></script>
+<script src="/src/main.ts" type="module"></script>
 </body>
 </html>

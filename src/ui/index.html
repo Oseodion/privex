@@ -23,13 +23,9 @@
     <a href="#how">How it works</a>
     <a href="#cases">Use cases</a>
     <a href="#why">Why Miden</a>
-    <a href="#docs">Docs</a>
+    <a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Docs</a>
   </div>
   <div class="nright">
-    <button class="btn-wallet">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      Connect Wallet
-    </button>
     <button class="btn-theme" id="themeBtn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     </button>
@@ -42,12 +38,7 @@
   <a href="#how">How it works</a>
   <a href="#cases">Use cases</a>
   <a href="#why">Why Miden</a>
-  <a href="#docs">Docs</a>
-  <button class="btn-wallet">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-    Connect Wallet
-  </button>
-  <a href="app.html" class="btn-launch">Launch App</a>
+  <a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Docs</a>
 </div>
 
 <!-- HERO -->
@@ -55,19 +46,53 @@
   <div class="hero-grid"></div>
   <div class="hero-glow-l"></div>
   <div class="hero-glow-r"></div>
+  <div class="hero-glow-corner"></div>
   <div class="hero-badge"><div class="pdot"></div>Built on Miden - Testnet Live</div>
   <h1>Private rules.<br><span class="oa">Automatic</span><span class="dim">execution.</span></h1>
   <p class="hero-sub">Lock assets. Set private conditions. The chain executes automatically when conditions are met - no middleman, no exposure, no trust required.</p>
   <div class="hero-btns">
-    <button class="btn-prim">
+    <a href="/src/ui/app.html" class="btn-prim">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      Create Vault Rule
-    </button>
-    <button class="btn-sec">Read the Docs</button>
+      Create a Vault
+    </a>
+    <a href="https://testnet.midenscan.com/account/0x1bb25f2739ce6180529dcc939df797" target="_blank" rel="noopener noreferrer" class="btn-sec">
+      View on Testnet
+    </a>
   </div>
 </section>
 
-<div class="after-hero"></div>
+<div class="after-hero">
+  <div class="term-wrap">
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dots"><div class="td r"></div><div class="td y"></div><div class="td g"></div></div>
+        <span class="term-label">Privex - vault rule - sealed</span>
+        <div class="term-live"><div class="pdot"></div>LIVE ON MIDEN TESTNET</div>
+      </div>
+      <div class="term-body">
+        <div class="tl"><span class="tp">$</span><span class="tc" id="typed-cmd"></span><span class="cursor" id="typed-cursor"></span></div>
+        <div class="tblock" id="tblock" style="opacity:0;transition:opacity 0.4s">
+          <div class="tbr"><span class="tky">asset</span><span class="tv"><span class="sv">▓▓▓▓▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">recipient</span><span class="tv">0x<span class="sv">▓▓▓▓</span>...<span class="sv">▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">condition</span><span class="tv"><span class="sv">▓▓▓▓▓▓▓▓▓▓▓▓</span> <span class="stag">sealed</span></span></div>
+          <div class="tbr"><span class="tky">trigger</span><span class="tv">automatic</span></div>
+        </div>
+        <div id="tresults" style="opacity:0;transition:opacity 0.4s">
+          <div class="tl"><span class="tp">-&gt;</span><span class="tsu">Vault rule deployed</span><span class="tcmt">// ZK proof generated locally</span></div>
+          <div class="tl"><span class="tp">-&gt;</span><span class="tsu">Assets locked in private Note</span></div>
+          <div class="tl"><span class="tp">-&gt;</span><span class="tcmt">// Chain watches. Nobody else sees anything.</span></div>
+        </div>
+        <div class="tx-feed">
+          <div class="tx-feed-label">Live network activity</div>
+          <div class="tx-item" id="tx1"><span class="tx-hash">0x3f7a...c291</span><span class="tx-action">Vault rule created</span><span class="tx-status confirmed">confirmed</span></div>
+          <div class="tx-item" id="tx2"><span class="tx-hash">0x8b2e...f104</span><span class="tx-action">Assets locked - <span class="sv">▓▓▓▓</span> ETH</span><span class="tx-status sealed">sealed</span></div>
+          <div class="tx-item" id="tx3"><span class="tx-hash">0xd91c...7a38</span><span class="tx-action">Check-in signal sent</span><span class="tx-status confirmed">confirmed</span></div>
+          <div class="tx-item" id="tx4"><span class="tx-hash">0x12ff...8830</span><span class="tx-action">Condition evaluation</span><span class="tx-status pending">pending</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- STATS -->
 <div class="stats rv">
@@ -193,7 +218,7 @@
   <p>Private conditions. Automatic execution. Zero middleman.</p>
   <div class="hero-btns">
     <a href="app.html" class="btn-prim"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Launch App</a>
-    <button class="btn-sec">View on GitHub</button>
+    <a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer" class="btn-sec">Read the Docs</a>
   </div>
 </div>
 
@@ -208,8 +233,8 @@
       <div class="ftag-line">Private rules. Automatic execution. Built on Miden.</div>
       <div class="fbuilt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Built on <span>Miden</span></div>
     </div>
-    <div class="fcol"><h5>Protocol</h5><a href="#">How it works</a><a href="#">Smart contracts</a><a href="#">Security</a><a href="#">Audits</a></div>
-    <div class="fcol"><h5>Developers</h5><a href="#">Documentation</a><a href="#">GitHub</a><a href="#">SDK</a><a href="#">Testnet faucet</a></div>
+    <div class="fcol"><h5>Protocol</h5><a href="#how">How it works</a><a href="https://docs.miden.xyz/builder/smart-contracts" target="_blank" rel="noopener noreferrer">Smart contracts</a><a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Security</a><a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Audits</a></div>
+    <div class="fcol"><h5>Developers</h5><a href="https://docs.miden.xyz" target="_blank" rel="noopener noreferrer">Documentation</a><a href="https://github.com/0xMiden" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://docs.miden.xyz/builder/tools" target="_blank" rel="noopener noreferrer">SDK</a><a href="https://faucet.testnet.miden.io/" target="_blank" rel="noopener noreferrer">Testnet faucet</a></div>
     <div class="fcol"><h5>Community</h5><a href="https://x.com/0xMiden">Twitter / X</a><a href="https://t.me/BuildOnMiden">Telegram</a></div>
   </div>
   <div class="fbot">
@@ -218,6 +243,6 @@
   </div>
 </footer>
 
-<script src="../main.ts" type="module"></script>
+<script src="/src/landing.ts" type="module"></script>
 </body>
 </html>

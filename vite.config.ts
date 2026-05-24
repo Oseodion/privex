@@ -3,23 +3,24 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uiRoot = path.resolve(__dirname, "src/ui");
+const repoRoot = path.resolve(__dirname, ".");
 
 /**
- * Vite serves and builds the static UI from src/ui.
- * Multi-page input so both the landing page and the app shell get full builds.
+ * Vite root is the repository root so /src/*.ts modules linked from HTML resolve correctly.
+ * Multi-page HTML entry points live under src/ui/.
  */
 export default defineConfig({
-  root: uiRoot,
+  root: repoRoot,
   base: "./",
-  assetsInclude: ["**/*.wasm"],
+  assetsInclude: ["**/*.wasm", "**/*.masp"],
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: path.resolve(uiRoot, "index.html"),
-        app: path.resolve(uiRoot, "app.html"),
+        home: path.resolve(repoRoot, "index.html"),
+        main: path.resolve(repoRoot, "src/ui/index.html"),
+        app: path.resolve(repoRoot, "src/ui/app.html"),
       },
     },
   },

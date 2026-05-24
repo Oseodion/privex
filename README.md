@@ -4,9 +4,10 @@
 
 ## Links
 
-- **Live Demo:** coming soon
-- **Testnet:** Miden testnet stable 0.14.0
-- **GitHub:** https://github.com/Oseodion/privex
+- **Live Demo:** https://privex-ten.vercel.app
+- **App:** https://privex-ten.vercel.app/app
+- **Testnet Contract:** https://testnet.midenscan.com/account/0x1bb25f2739ce6180529dcc939df797
+- **Miden Docs:** https://docs.miden.xyz
 
 ## The Problem
 

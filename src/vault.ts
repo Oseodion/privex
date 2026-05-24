@@ -31,10 +31,10 @@ export const VAULT_CONTRACT_ACCOUNT_ID =
   "0x1bb25f2739ce6180529dcc939df797";
 
 /** Path to the compiled vault account package served by Vite from the repo root. */
-const VAULT_ACCOUNT_MASP_URL = "/src/assets/vault_account.masp";
+const VAULT_ACCOUNT_MASP_URL = "/assets/vault_account.masp";
 
 /** Path to the init transaction script package served by Vite from the repo root. */
-const VAULT_INIT_MASP_URL = "/src/assets/vault_init.masp";
+const VAULT_INIT_MASP_URL = "/assets/vault_init.masp";
 
 /**
  * Advice-map key for init_vault parameters. Must match vault-init-tx/src/lib.rs

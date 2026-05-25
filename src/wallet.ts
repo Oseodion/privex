@@ -46,6 +46,11 @@ function withTimeout<T>(
  * Safe to call again: returns the same client if already initialized.
  */
 export async function initClient(): Promise<MidenClient> {
+  console.log("crossOriginIsolated:", self.crossOriginIsolated);
+  console.log(
+    "SharedArrayBuffer available:",
+    typeof SharedArrayBuffer !== "undefined"
+  );
   if (midenClient !== null) {
     console.log("initClient: reusing existing Miden client");
     return midenClient;

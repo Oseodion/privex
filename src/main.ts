@@ -513,6 +513,7 @@ async function handleConnectWalletExtension(): Promise<void> {
       await w.midenWallet.connect("UPON_REQUEST", "testnet");
       const accountId = readMidenWalletAccountId(w.midenWallet);
       if (accountId.length > 0) {
+        console.log("midenWallet keys:", Object.keys(w.midenWallet));
         await finishConnectWithAccountId(accountId);
         return;
       }

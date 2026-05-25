@@ -21,8 +21,13 @@
     }
   },
   "type": "module",
+  "pnpm": {
+    "minimumReleaseAgeExclude": [
+      "@miden-sdk/miden-sdk"
+    ]
+  },
   "dependencies": {
-    "@miden-sdk/miden-sdk": "^0.14.5"
+    "@miden-sdk/miden-sdk": "^0.14.10"
   },
   "devDependencies": {
     "@types/node": "^25.8.0",

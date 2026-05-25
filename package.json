@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "cp dist/assets/miden_client_web-*.wasm dist/assets/miden_client_web.wasm",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -53,18 +53,16 @@ const VAULT_INIT_ADVICE_KEY = Word.newFromFelts([
 /** Storage slot name for the vault contract map (see rust-sdk-pitfalls P5). */
 const VAULT_MAP_SLOT_NAME = "miden_vault_account::vault_contract::vault_map";
 
-/** Payload for Miden Wallet extension custom transaction submission. */
-interface MidenWalletRequestTransactionPayload {
-  address: string;
-  transactionRequest: string;
-  recipientAddress?: string;
-}
-
 /** Miden Wallet browser extension surface used for offline transaction submit. */
 interface MidenWalletExtension {
-  requestTransaction?: (
-    payload: MidenWalletRequestTransactionPayload
-  ) => Promise<unknown>;
+  requestTransaction?: (tx: {
+    type: string;
+    payload: {
+      address: string;
+      recipientAddress: string;
+      transactionRequest: string;
+    };
+  }) => Promise<{ transactionId?: string }>;
   waitForTransaction?: (txId: string) => Promise<unknown>;
 }
 
@@ -168,10 +166,27 @@ async function createVaultWithExtension(
     throw new Error("Miden Wallet extension is not available for transactions.");
   }
   const vaultId = vaultAccount.id().toString();
+  const transactionRequestB64 = serializeTransactionRequestToBase64(request);
+
+  console.log(
+    "requestTransaction envelope:",
+    JSON.stringify({
+      type: "custom",
+      payload: {
+        address: vaultId,
+        recipientAddress: ownerIdStr,
+        transactionRequestLength: transactionRequestB64.length,
+      },
+    })
+  );
+
   await wallet.requestTransaction({
-    address: vaultId,
-    recipientAddress: ownerIdStr,
-    transactionRequest: serializeTransactionRequestToBase64(request),
+    type: "custom",
+    payload: {
+      address: vaultId,
+      recipientAddress: ownerIdStr,
+      transactionRequest: transactionRequestB64,
+    },
   });
 
   return vaultId;

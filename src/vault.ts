@@ -1,11 +1,14 @@
 import type {
+  Account,
   AccountHeader,
   AccountStorage,
   MidenClient,
 } from "@miden-sdk/miden-sdk";
 import {
+  AccountBuilder,
   AccountComponent,
   AccountId,
+  AccountStorageMode,
   AccountType,
   AdviceMap,
   AuthSecretKey,
@@ -49,6 +52,172 @@ const VAULT_INIT_ADVICE_KEY = Word.newFromFelts([
 
 /** Storage slot name for the vault contract map (see rust-sdk-pitfalls P5). */
 const VAULT_MAP_SLOT_NAME = "miden_vault_account::vault_contract::vault_map";
+
+/** Payload for Miden Wallet extension custom transaction submission. */
+interface MidenWalletRequestTransactionPayload {
+  address: string;
+  transactionRequest: string;
+  recipientAddress?: string;
+}
+
+/** Miden Wallet browser extension surface used for offline transaction submit. */
+interface MidenWalletExtension {
+  requestTransaction?: (
+    payload: MidenWalletRequestTransactionPayload
+  ) => Promise<unknown>;
+  waitForTransaction?: (txId: string) => Promise<unknown>;
+}
+
+/**
+ * True when the page can submit via the wallet extension (no MidenClient RPC).
+ */
+function canUseMidenWalletExtension(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const wallet = (window as { midenWallet?: MidenWalletExtension }).midenWallet;
+  return wallet !== undefined && typeof wallet.requestTransaction === "function";
+}
+
+/**
+ * Encodes serialized transaction request bytes for the wallet extension API.
+ */
+function serializeTransactionRequestToBase64(request: TransactionRequest): string {
+  const bytes = new Uint8Array(request.serialize());
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const slice = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...slice);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Loads packages and builds a new vault account locally (no RPC).
+ */
+async function buildVaultAccountLocally(): Promise<AccountComponent> {
+  const vaultPkg = await fetchMaspPackage(
+    VAULT_ACCOUNT_MASP_URL,
+    "vault account package"
+  );
+  const vaultMap = new StorageMap();
+  return AccountComponent.fromPackage(
+    vaultPkg,
+    new StorageSlotArray([StorageSlot.map(VAULT_MAP_SLOT_NAME, vaultMap)])
+  );
+}
+
+/**
+ * Builds a private vault account in WASM only (AccountBuilder, no MidenClient).
+ */
+function createVaultAccountFromComponent(
+  vaultComponent: AccountComponent
+): Account {
+  const seed = crypto.getRandomValues(new Uint8Array(32));
+  const auth = AuthSecretKey.rpoFalconWithRNG(seed);
+  const authComponent = AccountComponent.createAuthComponentFromSecretKey(auth);
+  const built = new AccountBuilder(seed)
+    .accountType(AccountType.RegularAccountImmutableCode)
+    .storageMode(AccountStorageMode.private())
+    .withComponent(vaultComponent)
+    .withAuthComponent(authComponent)
+    .build();
+  return built.account;
+}
+
+/**
+ * Builds the init_vault transaction request (local WASM only).
+ */
+async function buildVaultInitRequest(
+  ownerWord: Word,
+  recipientWord: Word,
+  interval: number
+): Promise<TransactionRequest> {
+  const initPkg = await fetchMaspPackage(VAULT_INIT_MASP_URL, "vault init script");
+  const txScript = TransactionScript.fromPackage(initPkg);
+  const adviceMap = new AdviceMap();
+  const initFelts = buildInitAdviceFelts(ownerWord, recipientWord, interval);
+  adviceMap.insert(VAULT_INIT_ADVICE_KEY, new FeltArray(initFelts));
+  return new TransactionRequestBuilder()
+    .withCustomScript(txScript)
+    .extendAdviceMap(adviceMap)
+    .build();
+}
+
+/**
+ * Creates and initializes a vault via the Miden Wallet extension (no MidenClient).
+ */
+async function createVaultWithExtension(
+  ownerIdStr: string,
+  trimmedRecipient: string,
+  interval: number
+): Promise<string> {
+  const ownerId = parseAccountId(ownerIdStr, "Owner account");
+  const recipientId = parseAccountId(trimmedRecipient, "Recipient account");
+  const ownerWord = accountIdToWord(ownerId);
+  const recipientWord = accountIdToWord(recipientId);
+
+  const vaultComponent = await buildVaultAccountLocally();
+  const vaultAccount = createVaultAccountFromComponent(vaultComponent);
+  const request = await buildVaultInitRequest(ownerWord, recipientWord, interval);
+
+  const wallet = (window as unknown as { midenWallet?: MidenWalletExtension })
+    .midenWallet;
+  if (wallet === undefined || typeof wallet.requestTransaction !== "function") {
+    throw new Error("Miden Wallet extension is not available for transactions.");
+  }
+  const vaultId = vaultAccount.id().toString();
+  await wallet.requestTransaction({
+    address: vaultId,
+    recipientAddress: ownerIdStr,
+    transactionRequest: serializeTransactionRequestToBase64(request),
+  });
+
+  return vaultId;
+}
+
+/**
+ * Creates and initializes a vault via MidenClient (manual account ID / no extension).
+ */
+async function createVaultWithClient(
+  ownerIdStr: string,
+  trimmedRecipient: string,
+  interval: number
+): Promise<string> {
+  const client = await getOrInitClient();
+  await client.sync();
+
+  const ownerId = parseAccountId(ownerIdStr, "Owner account");
+  const recipientId = parseAccountId(trimmedRecipient, "Recipient account");
+  const ownerWord = accountIdToWord(ownerId);
+  const recipientWord = accountIdToWord(recipientId);
+
+  const vaultComponent = await buildVaultAccountLocally();
+  const seed = crypto.getRandomValues(new Uint8Array(32));
+  const auth = AuthSecretKey.rpoFalconWithRNG(seed);
+  const vaultAccount = await client.accounts.create({
+    type: AccountType.RegularAccountImmutableCode,
+    seed,
+    auth,
+    components: [vaultComponent],
+    storage: "private",
+  });
+
+  const request = await buildVaultInitRequest(ownerWord, recipientWord, interval);
+  const remoteProver = TransactionProver.newRemoteProver(
+    "https://tx-prover.testnet.miden.io",
+    300_000n
+  );
+  await client.transactions.submit(vaultAccount, request, {
+    waitForConfirmation: true,
+    timeout: 300_000,
+    prover: remoteProver,
+  });
+
+  await client.sync();
+  return vaultAccount.id().toString();
+}
 
 /**
  * Returns the connected Miden client, initializing testnet if the page was
@@ -243,9 +412,7 @@ export async function createVault(
   interval: number,
   amount: number
 ): Promise<string> {
-  console.log("createVault called");
   try {
-    console.log("validating inputs");
     const trimmedRecipient = recipient.trim();
     if (trimmedRecipient.length === 0) {
       throw new Error("Recipient wallet address is required.");
@@ -264,66 +431,15 @@ export async function createVault(
       );
     }
 
-    console.log("calling getOrInitClient");
-    const client = await getOrInitClient();
-    console.log("client ready, syncing");
-    await client.sync();
-    console.log("synced, loading packages");
+    if (canUseMidenWalletExtension()) {
+      return await createVaultWithExtension(
+        ownerIdStr,
+        trimmedRecipient,
+        interval
+      );
+    }
 
-    const ownerId = parseAccountId(ownerIdStr, "Owner account");
-    const recipientId = parseAccountId(trimmedRecipient, "Recipient account");
-    const ownerWord = accountIdToWord(ownerId);
-    const recipientWord = accountIdToWord(recipientId);
-
-    console.log("loading vault account package");
-    const vaultPkg = await fetchMaspPackage(
-      VAULT_ACCOUNT_MASP_URL,
-      "vault account package"
-    );
-    const vaultMap = new StorageMap();
-    const vaultComponent = AccountComponent.fromPackage(vaultPkg, new StorageSlotArray([
-      StorageSlot.map(VAULT_MAP_SLOT_NAME, vaultMap),
-    ]));
-
-    const seed = crypto.getRandomValues(new Uint8Array(32));
-    const auth = AuthSecretKey.rpoFalconWithRNG(seed);
-    console.log("creating vault account");
-    const vaultAccount = await client.accounts.create({
-      type: AccountType.RegularAccountImmutableCode,
-      seed,
-      auth,
-      components: [vaultComponent],
-      storage: "private",
-    });
-
-    console.log("building init transaction");
-    const initPkg = await fetchMaspPackage(VAULT_INIT_MASP_URL, "vault init script");
-    const txScript = TransactionScript.fromPackage(initPkg);
-
-    const adviceMap = new AdviceMap();
-    const initFelts = buildInitAdviceFelts(ownerWord, recipientWord, interval);
-    adviceMap.insert(VAULT_INIT_ADVICE_KEY, new FeltArray(initFelts));
-
-    // transactions.execute does not expose advice-map inputs; submit a built request instead.
-    const request: TransactionRequest = new TransactionRequestBuilder()
-      .withCustomScript(txScript)
-      .extendAdviceMap(adviceMap)
-      .build();
-
-    const remoteProver = TransactionProver.newRemoteProver(
-      "https://tx-prover.testnet.miden.io",
-      300_000n
-    );
-    console.log("submitting transaction");
-    await client.transactions.submit(vaultAccount, request, {
-      waitForConfirmation: true,
-      timeout: 300_000,
-      prover: remoteProver,
-    });
-
-    await client.sync();
-
-    return vaultAccount.id().toString();
+    return await createVaultWithClient(ownerIdStr, trimmedRecipient, interval);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(`Could not create a vault. ${detail}`);

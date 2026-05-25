@@ -11,7 +11,7 @@ const repoRoot = path.resolve(__dirname, ".");
  */
 export default defineConfig({
   root: repoRoot,
-  base: "./",
+  base: "/",
   assetsInclude: ["**/*.wasm", "**/*.masp"],
   build: {
     outDir: path.resolve(__dirname, "dist"),

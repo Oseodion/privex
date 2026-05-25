@@ -189,6 +189,7 @@ async function createVaultWithExtension(
     },
   });
 
+  console.log("createVault success, vaultId:", vaultId);
   return vaultId;
 }
 

@@ -701,11 +701,17 @@ function setupVaultFormSubmit(): void {
       const interval = Number(intervalInput.value.trim());
       const amount = Number(amountInput.value.trim());
       try {
-        await createVault(recipient, interval, amount);
+        const vaultId = await createVault(recipient, interval, amount);
         setVaultCreateStatus("");
+        setFormError("");
         setVaultSubmitButtonLoading(false);
         showScreen("dashboard");
-        await loadUserVaults();
+        setVaultMessage("Vault created successfully", true);
+        if (!connectedViaExtension) {
+          await loadUserVaults();
+        } else {
+          console.log("createVault done via extension, vaultId:", vaultId);
+        }
       } catch (err) {
         setVaultCreateStatus("");
         setVaultSubmitButtonLoading(false);

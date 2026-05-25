@@ -325,6 +325,23 @@ function setVaultMessage(message: string, show: boolean): void {
 const VAULT_CREATE_PENDING_MESSAGE =
   "Creating vault on Miden testnet. ZK proof is being generated. This takes 1-3 minutes. Please wait...";
 
+const VAULT_SUBMIT_BUTTON_LABEL = "Create Vault";
+const VAULT_SUBMIT_BUTTON_LOADING_LABEL = "Creating...";
+
+/**
+ * Disables the submit button and shows a loading label while createVault runs.
+ */
+function setVaultSubmitButtonLoading(loading: boolean): void {
+  const btn = queryById<HTMLButtonElement>("btn-vault-submit");
+  if (btn === null) {
+    return;
+  }
+  btn.disabled = loading;
+  btn.textContent = loading
+    ? VAULT_SUBMIT_BUTTON_LOADING_LABEL
+    : VAULT_SUBMIT_BUTTON_LABEL;
+}
+
 /**
  * Shows or hides the in-progress message under the create vault form.
  */
@@ -641,6 +658,7 @@ function setupVaultFormSubmit(): void {
     void (async () => {
       setFormError("");
       setVaultCreateStatus(VAULT_CREATE_PENDING_MESSAGE);
+      setVaultSubmitButtonLoading(true);
       const recipientInput = queryById<HTMLInputElement>("recipient");
       const intervalInput = queryById<HTMLInputElement>("interval");
       const amountInput = queryById<HTMLInputElement>("amount");
@@ -650,6 +668,7 @@ function setupVaultFormSubmit(): void {
         amountInput === null
       ) {
         setVaultCreateStatus("");
+        setVaultSubmitButtonLoading(false);
         setFormError("The form is missing required fields. Please refresh the page.");
         return;
       }
@@ -659,10 +678,12 @@ function setupVaultFormSubmit(): void {
       try {
         await createVault(recipient, interval, amount);
         setVaultCreateStatus("");
+        setVaultSubmitButtonLoading(false);
         showScreen("dashboard");
         await loadUserVaults();
       } catch (err) {
         setVaultCreateStatus("");
+        setVaultSubmitButtonLoading(false);
         const message =
           err instanceof Error
             ? err.message

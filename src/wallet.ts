@@ -9,18 +9,57 @@ let midenClient: MidenClient | null = null;
 /** Holds the hex account ID string when the user has a connected wallet. */
 let connectedAccountId: string | null = null;
 
+/** Max wait for MidenClient.createTestnet (SDK has no built-in connect timeout). */
+const INIT_CLIENT_TIMEOUT_MS = 30_000;
+
+/**
+ * Rejects if promise does not settle within ms. Used to fail fast on RPC connect hangs.
+ */
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(
+        new Error(
+          `${label} timed out after ${Math.round(ms / 1000)} seconds. Check your network and try again.`
+        )
+      );
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err: unknown) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 /**
  * Creates a Miden client for public testnet and keeps it in memory for later calls.
  * Safe to call again: returns the same client if already initialized.
  */
 export async function initClient(): Promise<MidenClient> {
   if (midenClient !== null) {
+    console.log("initClient: reusing existing Miden client");
     return midenClient;
   }
+  console.log("initClient called - connecting to Miden testnet");
   try {
-    const client = await MidenClient.createTestnet({
-      proverUrl: "testnet",
-    });
+    const client = await withTimeout(
+      MidenClient.createTestnet({
+        proverUrl: "testnet",
+      }),
+      INIT_CLIENT_TIMEOUT_MS,
+      "Miden testnet client connection"
+    );
+    console.log("MidenClient created successfully");
     midenClient = client;
     return client;
   } catch (err) {

@@ -56,8 +56,10 @@ const VAULT_MAP_SLOT_NAME = "miden_vault_account::vault_contract::vault_map";
  */
 async function getOrInitClient(): Promise<MidenClient> {
   try {
+    console.log("getOrInitClient: using existing client");
     return getClient();
   } catch {
+    console.log("getOrInitClient: no client yet, calling initClient");
     return initClient();
   }
 }
@@ -242,7 +244,9 @@ export async function createVault(
   interval: number,
   amount: number
 ): Promise<string> {
+  console.log("createVault called");
   try {
+    console.log("validating inputs");
     const trimmedRecipient = recipient.trim();
     if (trimmedRecipient.length === 0) {
       throw new Error("Recipient wallet address is required.");
@@ -261,14 +265,18 @@ export async function createVault(
       );
     }
 
+    console.log("calling getOrInitClient");
     const client = await getOrInitClient();
+    console.log("client ready, syncing");
     await client.sync();
+    console.log("synced, loading packages");
 
     const ownerId = parseAccountId(ownerIdStr, "Owner account");
     const recipientId = parseAccountId(trimmedRecipient, "Recipient account");
     const ownerWord = accountIdToWord(ownerId);
     const recipientWord = accountIdToWord(recipientId);
 
+    console.log("loading vault account package");
     const vaultPkg = await fetchMaspPackage(
       VAULT_ACCOUNT_MASP_URL,
       "vault account package"
@@ -280,6 +288,7 @@ export async function createVault(
 
     const seed = crypto.getRandomValues(new Uint8Array(32));
     const auth = AuthSecretKey.rpoFalconWithRNG(seed);
+    console.log("creating vault account");
     const vaultAccount = await client.accounts.create({
       type: AccountType.RegularAccountImmutableCode,
       seed,
@@ -288,6 +297,7 @@ export async function createVault(
       storage: "private",
     });
 
+    console.log("building init transaction");
     const initPkg = await fetchMaspPackage(VAULT_INIT_MASP_URL, "vault init script");
     const txScript = TransactionScript.fromPackage(initPkg);
 
@@ -305,6 +315,7 @@ export async function createVault(
       "https://tx-prover.testnet.miden.io",
       300_000n
     );
+    console.log("submitting transaction");
     await client.transactions.submit(vaultAccount, request, {
       waitForConfirmation: true,
       timeout: 300_000,

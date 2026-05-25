@@ -56,10 +56,9 @@ const VAULT_MAP_SLOT_NAME = "miden_vault_account::vault_contract::vault_map";
  */
 async function getOrInitClient(): Promise<MidenClient> {
   try {
-    console.log("getOrInitClient: using existing client");
     return getClient();
   } catch {
-    console.log("getOrInitClient: no client yet, calling initClient");
+    console.log("getOrInitClient: no client in memory, calling initClient");
     return initClient();
   }
 }

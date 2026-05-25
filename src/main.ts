@@ -469,6 +469,7 @@ async function loadUserVaults(): Promise<void> {
  * Persists the account id, refreshes UI, opens the dashboard, and loads vaults.
  */
 async function finishConnectWithAccountId(accountId: string): Promise<void> {
+  await initClient();
   setConnectedAccountId(accountId);
   updateWalletChips();
   showScreen("dashboard");
@@ -509,7 +510,6 @@ async function handleConnectWalletExtension(): Promise<void> {
   };
   if (w.midenWallet && typeof w.midenWallet.connect === "function") {
     try {
-      await initClient();
       await w.midenWallet.connect("UPON_REQUEST", "testnet");
       const accountId = readMidenWalletAccountId(w.midenWallet);
       if (accountId.length > 0) {
@@ -561,7 +561,6 @@ async function handleManualAccountConnect(
   button.textContent = "Connecting...";
   setConnectError("");
   try {
-    await initClient();
     if (input === null) {
       setConnectError(
         "The connect form is incomplete. Please refresh the page."
@@ -744,8 +743,7 @@ function setupAllHandlers(): void {
 }
 
 /**
- * Picks connect vs dashboard from saved account id only. Does not init the Miden client
- * so page load and click handlers are never blocked by RPC or WASM startup.
+ * Picks connect vs dashboard from saved account id, then restores the Miden client in the background.
  */
 async function bootstrap(): Promise<void> {
   setConnectError("");
@@ -766,6 +764,13 @@ async function bootstrap(): Promise<void> {
   if (savedAccountReady) {
     updateWalletChips();
     showScreen("dashboard");
+    void initClient().catch((err: unknown) => {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not connect to Miden testnet.";
+      setVaultMessage(message, true);
+    });
   } else {
     showScreen("connect");
   }

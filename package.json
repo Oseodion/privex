@@ -26,7 +26,11 @@
   },
   "devDependencies": {
     "@types/node": "^25.8.0",
+    "esbuild": "^0.28.0",
+    "rollup": "^4.60.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.6.0"
   }
 }

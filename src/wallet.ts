@@ -10,7 +10,7 @@ let midenClient: MidenClient | null = null;
 let connectedAccountId: string | null = null;
 
 /** Max wait for MidenClient.createTestnet (SDK has no built-in connect timeout). */
-const INIT_CLIENT_TIMEOUT_MS = 30_000;
+const INIT_CLIENT_TIMEOUT_MS = 120_000;
 
 /**
  * Rejects if promise does not settle within ms. Used to fail fast on RPC connect hangs.
@@ -24,7 +24,7 @@ function withTimeout<T>(
     const timer = setTimeout(() => {
       reject(
         new Error(
-          `${label} timed out after ${Math.round(ms / 1000)} seconds. Check your network and try again.`
+          `${label} timed out after 2 minutes. Check your network and try again.`
         )
       );
     }, ms);

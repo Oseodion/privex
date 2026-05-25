@@ -506,6 +506,8 @@ async function handleConnectWalletExtension(): Promise<void> {
       connect?: (permission: string, network: string) => Promise<unknown>;
       address?: string;
       permission?: { address?: string };
+      network?: unknown;
+      appName?: string;
     };
   };
   if (w.midenWallet && typeof w.midenWallet.connect === "function") {
@@ -518,6 +520,15 @@ async function handleConnectWalletExtension(): Promise<void> {
           JSON.stringify(Object.keys(w.midenWallet))
         );
         console.log("midenWallet object:", w.midenWallet);
+        console.log(
+          "midenWallet network:",
+          JSON.stringify(w.midenWallet.network)
+        );
+        console.log("midenWallet appName:", w.midenWallet.appName);
+        console.log(
+          "midenWallet proto methods:",
+          Object.getOwnPropertyNames(Object.getPrototypeOf(w.midenWallet))
+        );
         await finishConnectWithAccountId(accountId);
         return;
       }

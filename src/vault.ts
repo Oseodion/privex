@@ -441,7 +441,15 @@ export async function createVault(
 
     return await createVaultWithClient(ownerIdStr, trimmedRecipient, interval);
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
+    console.log("createVault error:", err);
+    let detail: string;
+    if (err instanceof Error) {
+      detail = err.message;
+    } else if (err !== null && typeof err === "object") {
+      detail = JSON.stringify(err);
+    } else {
+      detail = String(err);
+    }
     throw new Error(`Could not create a vault. ${detail}`);
   }
 }

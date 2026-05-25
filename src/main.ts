@@ -22,6 +22,9 @@ const THEME_LIGHT = "light";
 /** Value stored when the user prefers dark mode. */
 const THEME_DARK = "dark";
 
+/** True when the user connected via Miden Wallet extension (no MidenClient needed). */
+let connectedViaExtension = false;
+
 /**
  * Returns one element by id or null if it is missing.
  */
@@ -120,6 +123,7 @@ function setupWalletDropdown(): void {
 
   if (disconnectBtn !== null) {
     disconnectBtn.addEventListener("click", () => {
+      connectedViaExtension = false;
       clearConnectedAccount();
       closeWalletDropdown();
       setVaultMessage("", false);
@@ -469,12 +473,16 @@ async function loadUserVaults(): Promise<void> {
  * Persists the account id, refreshes UI, opens the dashboard, and loads vaults.
  */
 async function finishConnectWithAccountId(accountId: string): Promise<void> {
-  await initClient();
+  if (!connectedViaExtension) {
+    await initClient();
+  }
   setConnectedAccountId(accountId);
   updateWalletChips();
   showScreen("dashboard");
   setVaultMessage("", false);
-  await loadUserVaults();
+  if (!connectedViaExtension) {
+    await loadUserVaults();
+  }
 }
 
 /**
@@ -529,6 +537,7 @@ async function handleConnectWalletExtension(): Promise<void> {
           "midenWallet proto methods:",
           Object.getOwnPropertyNames(Object.getPrototypeOf(w.midenWallet))
         );
+        connectedViaExtension = true;
         await finishConnectWithAccountId(accountId);
         return;
       }
@@ -590,6 +599,7 @@ async function handleManualAccountConnect(
       );
       return;
     }
+    connectedViaExtension = false;
     await finishConnectWithAccountId(trimmed);
   } catch (err) {
     const message =
@@ -759,7 +769,7 @@ function setupAllHandlers(): void {
 }
 
 /**
- * Picks connect vs dashboard from saved account id, then restores the Miden client in the background.
+ * Picks connect vs dashboard from saved account id (does not init MidenClient on load).
  */
 async function bootstrap(): Promise<void> {
   setConnectError("");
@@ -780,13 +790,6 @@ async function bootstrap(): Promise<void> {
   if (savedAccountReady) {
     updateWalletChips();
     showScreen("dashboard");
-    void initClient().catch((err: unknown) => {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Could not connect to Miden testnet.";
-      setVaultMessage(message, true);
-    });
   } else {
     showScreen("connect");
   }

@@ -507,6 +507,8 @@ function readMidenWalletAccountId(wallet: {
 
 /**
  * Connects through `window.midenWallet` when the Miden Wallet extension is present.
+ * Uses address immediately when the extension already exposes it; otherwise calls
+ * connect() with a 60s cap, then reads address even if sync times out.
  */
 async function handleConnectWalletExtension(): Promise<void> {
   const w = window as {
@@ -514,31 +516,51 @@ async function handleConnectWalletExtension(): Promise<void> {
       connect?: (permission: string, network: string) => Promise<unknown>;
       address?: string;
       permission?: { address?: string };
-      network?: unknown;
-      appName?: string;
     };
   };
-  if (w.midenWallet && typeof w.midenWallet.connect === "function") {
-    try {
-      await w.midenWallet.connect("UPON_REQUEST", "testnet");
-      const accountId = readMidenWalletAccountId(w.midenWallet);
-      if (accountId.length > 0) {
-        connectedViaExtension = true;
-        await finishConnectWithAccountId(accountId);
-        return;
-      }
-      showConnectError(
-        "Wallet did not return an account id. Use manual entry below."
+
+  if (!w.midenWallet || typeof w.midenWallet.connect !== "function") {
+    showConnectError(
+      "Miden Wallet extension not detected. Install it from the Chrome Web Store or use your account ID below."
+    );
+    return;
+  }
+
+  if (w.midenWallet.address) {
+    connectedViaExtension = true;
+    await finishConnectWithAccountId(w.midenWallet.address);
+    return;
+  }
+
+  let connectFailureMessage: string | null = null;
+  try {
+    const connectPromise = w.midenWallet.connect("UPON_REQUEST", "testnet");
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(
+        () =>
+          reject(new Error("Connection timed out. Please try again.")),
+        60_000
       );
-      return;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      showConnectError("Wallet connection failed: " + msg);
-      return;
-    }
+    });
+    await Promise.race([connectPromise, timeoutPromise]);
+  } catch (err) {
+    connectFailureMessage =
+      err instanceof Error ? err.message : String(err);
+  }
+
+  const accountId = readMidenWalletAccountId(w.midenWallet);
+  if (accountId.length > 0) {
+    connectedViaExtension = true;
+    await finishConnectWithAccountId(accountId);
+    return;
+  }
+
+  if (connectFailureMessage !== null) {
+    showConnectError("Wallet connection failed: " + connectFailureMessage);
+    return;
   }
   showConnectError(
-    "Miden Wallet extension not detected. Install it from the Chrome Web Store or use your account ID below."
+    "Wallet did not return an account id. Use manual entry below."
   );
 }
 

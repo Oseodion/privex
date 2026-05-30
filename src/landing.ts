@@ -1,5 +1,3 @@
-console.log('landing.ts loading');
-
 /**
  * Landing page: theme, mobile drawer, terminal typing, and live tx feed cycling.
  * No wallet, vault, or Miden SDK imports.
@@ -209,7 +207,6 @@ function resetTypedCommandLine(): void {
  * Runs all landing-only setup once the DOM is ready.
  */
 function init(): void {
-  console.log('landing.ts init running');
   applySavedTheme();
   setupThemeToggle();
   setupMobileMenu();

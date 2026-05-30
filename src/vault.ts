@@ -168,18 +168,6 @@ async function createVaultWithExtension(
   const vaultId = vaultAccount.id().toString();
   const transactionRequestB64 = serializeTransactionRequestToBase64(request);
 
-  console.log(
-    "requestTransaction envelope:",
-    JSON.stringify({
-      type: "custom",
-      payload: {
-        address: vaultId,
-        recipientAddress: ownerIdStr,
-        transactionRequestLength: transactionRequestB64.length,
-      },
-    })
-  );
-
   await wallet.requestTransaction({
     type: "custom",
     payload: {
@@ -189,7 +177,6 @@ async function createVaultWithExtension(
     },
   });
 
-  console.log("createVault success, vaultId:", vaultId);
   return vaultId;
 }
 
@@ -243,7 +230,6 @@ async function getOrInitClient(): Promise<MidenClient> {
   try {
     return getClient();
   } catch {
-    console.log("getOrInitClient: no client in memory, calling initClient");
     return initClient();
   }
 }
@@ -457,7 +443,6 @@ export async function createVault(
 
     return await createVaultWithClient(ownerIdStr, trimmedRecipient, interval);
   } catch (err) {
-    console.log("createVault error:", err);
     let detail: string;
     if (err instanceof Error) {
       detail = err.message;

@@ -523,20 +523,6 @@ async function handleConnectWalletExtension(): Promise<void> {
       await w.midenWallet.connect("UPON_REQUEST", "testnet");
       const accountId = readMidenWalletAccountId(w.midenWallet);
       if (accountId.length > 0) {
-        console.log(
-          "midenWallet full:",
-          JSON.stringify(Object.keys(w.midenWallet))
-        );
-        console.log("midenWallet object:", w.midenWallet);
-        console.log(
-          "midenWallet network:",
-          JSON.stringify(w.midenWallet.network)
-        );
-        console.log("midenWallet appName:", w.midenWallet.appName);
-        console.log(
-          "midenWallet proto methods:",
-          Object.getOwnPropertyNames(Object.getPrototypeOf(w.midenWallet))
-        );
         connectedViaExtension = true;
         await finishConnectWithAccountId(accountId);
         return;
@@ -701,7 +687,7 @@ function setupVaultFormSubmit(): void {
       const interval = Number(intervalInput.value.trim());
       const amount = Number(amountInput.value.trim());
       try {
-        const vaultId = await createVault(recipient, interval, amount);
+        await createVault(recipient, interval, amount);
         setVaultCreateStatus("");
         setFormError("");
         setVaultSubmitButtonLoading(false);
@@ -709,8 +695,6 @@ function setupVaultFormSubmit(): void {
         setVaultMessage("Vault created successfully", true);
         if (!connectedViaExtension) {
           await loadUserVaults();
-        } else {
-          console.log("createVault done via extension, vaultId:", vaultId);
         }
       } catch (err) {
         setVaultCreateStatus("");

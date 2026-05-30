@@ -46,16 +46,9 @@ function withTimeout<T>(
  * Safe to call again: returns the same client if already initialized.
  */
 export async function initClient(): Promise<MidenClient> {
-  console.log("crossOriginIsolated:", self.crossOriginIsolated);
-  console.log(
-    "SharedArrayBuffer available:",
-    typeof SharedArrayBuffer !== "undefined"
-  );
   if (midenClient !== null) {
-    console.log("initClient: reusing existing Miden client");
     return midenClient;
   }
-  console.log("initClient called - connecting to Miden testnet");
   try {
     const client = await withTimeout(
       MidenClient.createTestnet({
@@ -65,7 +58,6 @@ export async function initClient(): Promise<MidenClient> {
       INIT_CLIENT_TIMEOUT_MS,
       "Miden testnet client connection"
     );
-    console.log("MidenClient created successfully");
     midenClient = client;
     return client;
   } catch (err) {

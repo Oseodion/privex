@@ -302,20 +302,6 @@ function setupMobileMenus(): void {
 }
 
 /**
- * Shows the other-wallet warning when window.ethereum is present, indicating
- * a browser extension like MetaMask may interfere with the Miden connect flow.
- */
-function maybeShowEthereumWarning(): void {
-  if (!("ethereum" in window)) {
-    return;
-  }
-  const el = queryById<HTMLElement>("connect-ext-warning");
-  if (el !== null) {
-    el.removeAttribute("hidden");
-  }
-}
-
-/**
  * Shows a message under the connect hero, or hides it when text is empty.
  */
 function setConnectError(message: string): void {
@@ -425,61 +411,6 @@ async function loadUserVaults(): Promise<void> {
     child.remove();
   }
   try {
-    if (connectedViaExtension) {
-      const { loadVaultRecords } = await import("./vault-records");
-      const records = loadVaultRecords();
-      if (records.length === 0) {
-        emptyEl.removeAttribute("hidden");
-        return;
-      }
-      emptyEl.setAttribute("hidden", "");
-      for (const record of records) {
-        const card = template.cloneNode(true) as HTMLElement;
-        card.removeAttribute("id");
-        card.classList.remove("hidden");
-
-        const idSpan = card.querySelector(".app-vault-id");
-        if (idSpan !== null) {
-          idSpan.textContent = truncateAccountIdChip(record.id);
-        }
-
-        const statusEl = card.querySelector(".app-status");
-        if (statusEl !== null) {
-          statusEl.textContent = "created";
-          statusEl.classList.remove("app-status-triggered", "app-status-closed");
-          statusEl.classList.add("app-status-active");
-        }
-
-        const labelCells = card.querySelectorAll(".app-vault-k");
-        const valueCells = card.querySelectorAll(".app-vault-v");
-        if (labelCells.length >= 1 && valueCells.length >= 1) {
-          labelCells[0].textContent = "Recipient";
-          valueCells[0].textContent = truncateAccountIdChip(record.recipient);
-        }
-        if (labelCells.length >= 2 && valueCells.length >= 2) {
-          labelCells[1].textContent = "Created";
-          valueCells[1].textContent = new Date(record.createdAt).toLocaleDateString();
-        }
-
-        const extraRow = card.querySelector(".app-vault-grid-extra");
-        if (extraRow !== null && labelCells.length >= 3 && valueCells.length >= 3) {
-          extraRow.removeAttribute("hidden");
-          labelCells[2].textContent = "Interval";
-          valueCells[2].textContent = `${record.interval} blocks`;
-        }
-
-        const checkBtn = card.querySelector(
-          "button[data-vault-id]"
-        ) as HTMLButtonElement | null;
-        if (checkBtn !== null) {
-          checkBtn.dataset.vaultId = record.id;
-        }
-
-        list.appendChild(card);
-      }
-      return;
-    }
-
     const { getUserVaults, getVaultStatus, isPrivateAccountLookupError } =
       await import("./vault");
     const ids = await getUserVaults();
@@ -566,7 +497,9 @@ async function finishConnectWithAccountId(accountId: string): Promise<void> {
   updateWalletChips();
   showScreen("dashboard");
   setVaultMessage("", false);
-  void loadUserVaults();
+  if (!connectedViaExtension) {
+    await loadUserVaults();
+  }
 }
 
 /** Miden Wallet extension surface used for connect. */
@@ -865,7 +798,9 @@ function setupVaultFormSubmit(): void {
         setVaultSubmitButtonLoading(false);
         showScreen("dashboard");
         setVaultMessage("Vault created successfully", true);
-        void loadUserVaults();
+        if (!connectedViaExtension) {
+          await loadUserVaults();
+        }
       } catch (err) {
         setVaultCreateStatus("");
         setVaultSubmitButtonLoading(false);
@@ -995,7 +930,6 @@ function initApp(): void {
     }
   });
 
-  maybeShowEthereumWarning();
   setConnectError("");
   setFormError("");
   setVaultCreateStatus("");

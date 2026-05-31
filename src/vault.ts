@@ -456,6 +456,14 @@ export async function createVault(
     } else {
       detail = String(err);
     }
+    if (
+      detail.includes("INVALID_PARAMS") ||
+      detail.includes("InvalidParamsMidenWalletError")
+    ) {
+      throw new Error(
+        "Miden node is currently unreachable. Please try again in a few minutes."
+      );
+    }
     throw new Error(`Could not create a vault. ${detail}`);
   }
 }

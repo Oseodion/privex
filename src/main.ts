@@ -534,7 +534,7 @@ async function handleConnectWalletExtension(): Promise<void> {
 
   let connectFailureMessage: string | null = null;
   try {
-    const connectPromise = w.midenWallet.connect("UPON_REQUEST", "testnet");
+    const connectPromise = w.midenWallet.connect("ALWAYS", "testnet");
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(
         () =>

@@ -566,7 +566,7 @@ async function finishConnectWithAccountId(accountId: string): Promise<void> {
   updateWalletChips();
   showScreen("dashboard");
   setVaultMessage("", false);
-  await loadUserVaults();
+  void loadUserVaults();
 }
 
 /** Miden Wallet extension surface used for connect. */
@@ -865,7 +865,7 @@ function setupVaultFormSubmit(): void {
         setVaultSubmitButtonLoading(false);
         showScreen("dashboard");
         setVaultMessage("Vault created successfully", true);
-        await loadUserVaults();
+        void loadUserVaults();
       } catch (err) {
         setVaultCreateStatus("");
         setVaultSubmitButtonLoading(false);

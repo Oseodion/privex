@@ -426,7 +426,7 @@ async function loadUserVaults(): Promise<void> {
   }
   try {
     if (connectedViaExtension) {
-      const { loadVaultRecords } = await import("./vault");
+      const { loadVaultRecords } = await import("./vault-records");
       const records = loadVaultRecords();
       if (records.length === 0) {
         emptyEl.removeAttribute("hidden");
@@ -566,9 +566,7 @@ async function finishConnectWithAccountId(accountId: string): Promise<void> {
   updateWalletChips();
   showScreen("dashboard");
   setVaultMessage("", false);
-  if (!connectedViaExtension) {
-    await loadUserVaults();
-  }
+  await loadUserVaults();
 }
 
 /** Miden Wallet extension surface used for connect. */
@@ -867,9 +865,7 @@ function setupVaultFormSubmit(): void {
         setVaultSubmitButtonLoading(false);
         showScreen("dashboard");
         setVaultMessage("Vault created successfully", true);
-        if (!connectedViaExtension) {
-          await loadUserVaults();
-        }
+        await loadUserVaults();
       } catch (err) {
         setVaultCreateStatus("");
         setVaultSubmitButtonLoading(false);

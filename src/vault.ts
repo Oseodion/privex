@@ -24,7 +24,8 @@ import {
   TransactionProver,
   Word,
 } from "@miden-sdk/miden-sdk";
-import { getClient, getConnectedAccountId, initClient } from "./wallet";
+import { getConnectedAccountId } from "./account";
+import { getClient, initClient } from "./wallet";
 
 /**
  * Deployed Privex vault template account on Miden testnet.

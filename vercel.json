@@ -1,6 +1,9 @@
 {
+  "buildCommand": "pnpm install --frozen-lockfile --ignore-scripts && pnpm build",
+  "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/app", "destination": "/src/ui/app.html" }
+    { "source": "/app", "destination": "/src/ui/app.html" },
+    { "source": "/app/", "destination": "/src/ui/app.html" }
   ],
   "headers": [
     {

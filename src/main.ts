@@ -1,17 +1,9 @@
-import { sendCheckIn } from "./checkin";
-import {
-  createVault,
-  getUserVaults,
-  getVaultStatus,
-  isPrivateAccountLookupError,
-} from "./vault";
 import {
   clearConnectedAccount,
   getConnectedAccountId,
-  initClient,
   loadSavedAccountId,
   setConnectedAccountId,
-} from "./wallet";
+} from "./account";
 
 /** localStorage key for light or dark theme. */
 const THEME_STORAGE_KEY = "privex_theme";
@@ -22,8 +14,30 @@ const THEME_LIGHT = "light";
 /** Value stored when the user prefers dark mode. */
 const THEME_DARK = "dark";
 
+/** Session flag: extension connect should not load MidenClient WASM on this page. */
+const EXTENSION_CONNECT_STORAGE_KEY = "privex_connected_via_extension";
+
 /** True when the user connected via Miden Wallet extension (no MidenClient needed). */
-let connectedViaExtension = false;
+let connectedViaExtension = readExtensionConnectFlag();
+
+function readExtensionConnectFlag(): boolean {
+  if (typeof sessionStorage === "undefined") {
+    return false;
+  }
+  return sessionStorage.getItem(EXTENSION_CONNECT_STORAGE_KEY) === "1";
+}
+
+function setExtensionConnectFlag(enabled: boolean): void {
+  connectedViaExtension = enabled;
+  if (typeof sessionStorage === "undefined") {
+    return;
+  }
+  if (enabled) {
+    sessionStorage.setItem(EXTENSION_CONNECT_STORAGE_KEY, "1");
+  } else {
+    sessionStorage.removeItem(EXTENSION_CONNECT_STORAGE_KEY);
+  }
+}
 
 /**
  * Returns one element by id or null if it is missing.
@@ -123,7 +137,7 @@ function setupWalletDropdown(): void {
 
   if (disconnectBtn !== null) {
     disconnectBtn.addEventListener("click", () => {
-      connectedViaExtension = false;
+      setExtensionConnectFlag(false);
       clearConnectedAccount();
       closeWalletDropdown();
       setVaultMessage("", false);
@@ -397,6 +411,8 @@ async function loadUserVaults(): Promise<void> {
     child.remove();
   }
   try {
+    const { getUserVaults, getVaultStatus, isPrivateAccountLookupError } =
+      await import("./vault");
     const ids = await getUserVaults();
     if (ids.length === 0) {
       emptyEl.removeAttribute("hidden");
@@ -474,6 +490,7 @@ async function loadUserVaults(): Promise<void> {
  */
 async function finishConnectWithAccountId(accountId: string): Promise<void> {
   if (!connectedViaExtension) {
+    const { initClient } = await import("./wallet");
     await initClient();
   }
   setConnectedAccountId(accountId);
@@ -485,13 +502,29 @@ async function finishConnectWithAccountId(accountId: string): Promise<void> {
   }
 }
 
+/** Miden Wallet extension surface used for connect. */
+interface MidenWalletExtension {
+  address?: string;
+  network?: string;
+  permission?: {
+    address?: string;
+    rpc?: string;
+  };
+  connect?: (
+    permission: string,
+    network: string,
+    allowedPrivateData?: number
+  ) => Promise<unknown>;
+  disconnect?: () => Promise<unknown>;
+}
+
+const EXTENSION_CONNECT_TIMEOUT_MS = 90_000;
+const EXTENSION_CONNECT_POLL_MS = 250;
+
 /**
  * Reads account id from the extension object after connect().
  */
-function readMidenWalletAccountId(wallet: {
-  address?: string;
-  permission?: { address?: string };
-}): string {
+function readMidenWalletAccountId(wallet: MidenWalletExtension): string {
   if (typeof wallet.address === "string" && wallet.address.trim().length > 0) {
     return wallet.address.trim();
   }
@@ -506,61 +539,110 @@ function readMidenWalletAccountId(wallet: {
 }
 
 /**
- * Connects through `window.midenWallet` when the Miden Wallet extension is present.
- * Uses address immediately when the extension already exposes it; otherwise calls
- * connect() with a 60s cap, then reads address even if sync times out.
+ * Uses the wallet's active network when available, otherwise testnet.
+ */
+function resolveExtensionNetwork(wallet: MidenWalletExtension): string {
+  if (typeof wallet.network === "string" && wallet.network.trim().length > 0) {
+    return wallet.network.trim();
+  }
+  return "testnet";
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * Waits for connect() while polling for address in case the extension sets it early.
+ */
+async function waitForExtensionConnect(
+  wallet: MidenWalletExtension,
+  connectPromise: Promise<unknown>
+): Promise<{ accountId: string; timedOut: boolean }> {
+  const deadline = Date.now() + EXTENSION_CONNECT_TIMEOUT_MS;
+  let connectError: string | null = null;
+
+  const trackedConnect = connectPromise.catch((err: unknown) => {
+    connectError = err instanceof Error ? err.message : String(err);
+  });
+
+  while (Date.now() < deadline) {
+    const accountId = readMidenWalletAccountId(wallet);
+    if (accountId.length > 0) {
+      return { accountId, timedOut: false };
+    }
+    await Promise.race([sleep(EXTENSION_CONNECT_POLL_MS), trackedConnect]);
+    if (connectError !== null) {
+      break;
+    }
+  }
+
+  await Promise.race([
+    trackedConnect,
+    sleep(EXTENSION_CONNECT_POLL_MS),
+  ]);
+
+  const accountId = readMidenWalletAccountId(wallet);
+  if (accountId.length > 0) {
+    return { accountId, timedOut: false };
+  }
+
+  return { accountId: "", timedOut: connectError === null };
+}
+
+/**
+ * Connects through `window.midenWallet` without loading Miden SDK WASM on this page.
  */
 async function handleConnectWalletExtension(): Promise<void> {
-  const w = window as {
-    midenWallet?: {
-      connect?: (permission: string, network: string) => Promise<unknown>;
-      address?: string;
-      permission?: { address?: string };
-    };
-  };
+  const wallet = (window as { midenWallet?: MidenWalletExtension }).midenWallet;
 
-  if (!w.midenWallet || typeof w.midenWallet.connect !== "function") {
+  if (!wallet || typeof wallet.connect !== "function") {
     showConnectError(
       "Miden Wallet extension not detected. Install it from the Chrome Web Store or use your account ID below."
     );
     return;
   }
 
-  if (w.midenWallet.address) {
-    connectedViaExtension = true;
-    await finishConnectWithAccountId(w.midenWallet.address);
+  const existingId = readMidenWalletAccountId(wallet);
+  if (existingId.length > 0 && wallet.permission !== undefined) {
+    setExtensionConnectFlag(true);
+    await finishConnectWithAccountId(existingId);
     return;
   }
 
-  let connectFailureMessage: string | null = null;
-  try {
-    const connectPromise = w.midenWallet.connect("UPON_REQUEST", "testnet");
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(
-        () =>
-          reject(new Error("Connection timed out. Please try again.")),
-        60_000
-      );
-    });
-    await Promise.race([connectPromise, timeoutPromise]);
-  } catch (err) {
-    connectFailureMessage =
-      err instanceof Error ? err.message : String(err);
+  const network = resolveExtensionNetwork(wallet);
+
+  if (typeof wallet.disconnect === "function") {
+    try {
+      await wallet.disconnect();
+    } catch {
+      /* clear stale session before reconnect */
+    }
   }
 
-  const accountId = readMidenWalletAccountId(w.midenWallet);
+  const connectPromise = wallet.connect("UPON_REQUEST", network, 0);
+  const { accountId, timedOut } = await waitForExtensionConnect(
+    wallet,
+    connectPromise
+  );
+
   if (accountId.length > 0) {
-    connectedViaExtension = true;
+    setExtensionConnectFlag(true);
     await finishConnectWithAccountId(accountId);
     return;
   }
 
-  if (connectFailureMessage !== null) {
-    showConnectError("Wallet connection failed: " + connectFailureMessage);
+  if (timedOut) {
+    showConnectError(
+      "Connection timed out. Unlock Miden Wallet, approve the site, then try again."
+    );
     return;
   }
+
   showConnectError(
-    "Wallet did not return an account id. Use manual entry below."
+    "Wallet connection failed. Unlock Miden Wallet and try again, or use your account ID below."
   );
 }
 
@@ -607,7 +689,7 @@ async function handleManualAccountConnect(
       );
       return;
     }
-    connectedViaExtension = false;
+    setExtensionConnectFlag(false);
     await finishConnectWithAccountId(trimmed);
   } catch (err) {
     const message =
@@ -709,6 +791,7 @@ function setupVaultFormSubmit(): void {
       const interval = Number(intervalInput.value.trim());
       const amount = Number(amountInput.value.trim());
       try {
+        const { createVault } = await import("./vault");
         await createVault(recipient, interval, amount);
         setVaultCreateStatus("");
         setFormError("");
@@ -754,6 +837,7 @@ function setupVaultListDelegation(): void {
     }
     void (async () => {
       try {
+        const { sendCheckIn } = await import("./checkin");
         const txId = await sendCheckIn(vaultId);
         setVaultMessage(`Check-in confirmed - tx: ${txId}`, true);
       } catch (err) {

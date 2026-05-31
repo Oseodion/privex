@@ -1,4 +1,3 @@
-import { checkIn } from "./vault";
 
 /** Payload for the check-in success event so listeners can read the transaction id. */
 export interface CheckinCompleteDetail {
@@ -33,6 +32,7 @@ function dispatchCheckinEvent(
 export async function sendCheckIn(vaultAccountId: string): Promise<string> {
   dispatchCheckinEvent("checkin:start");
   try {
+    const { checkIn } = await import("./vault");
     const txId = await checkIn(vaultAccountId);
     dispatchCheckinEvent("checkin:complete", { txId });
     return txId;

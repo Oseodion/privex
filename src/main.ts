@@ -413,7 +413,7 @@ async function loadUserVaults(): Promise<void> {
 
   if (connectedViaExtension) {
     const { loadVaultRecords } = await import("./vault-records");
-    const records = loadVaultRecords();
+    const records = loadVaultRecords(getConnectedAccountId() ?? "");
     if (records.length === 0) {
       emptyEl.removeAttribute("hidden");
       return;
@@ -891,12 +891,23 @@ function setupVaultListDelegation(): void {
     if (vaultId === undefined || vaultId.length === 0) {
       return;
     }
+    const originalLabel = btn.textContent ?? "Check In";
+    btn.disabled = true;
+    btn.textContent = "Checking in...";
+    setVaultMessage("", false);
     void (async () => {
       try {
         const { sendCheckIn } = await import("./checkin");
         const txId = await sendCheckIn(vaultId);
+        btn.textContent = "Checked in!";
         setVaultMessage(`Check-in confirmed - tx: ${txId}`, true);
+        window.setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = originalLabel;
+        }, 2000);
       } catch (err) {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
         const message =
           err instanceof Error
             ? err.message

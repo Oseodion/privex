@@ -1,6 +1,3 @@
-/** localStorage key for the persisted vault list. */
-const VAULT_STORAGE_KEY = "privex_vaults";
-
 /** Minimal vault record written to localStorage after successful creation. */
 export interface VaultRecord {
   id: string;
@@ -9,28 +6,33 @@ export interface VaultRecord {
   createdAt: number;
 }
 
-/**
- * Appends a newly created vault to the localStorage list, deduplicating by id.
- */
-export function saveVaultRecord(record: VaultRecord): void {
-  if (typeof localStorage === "undefined") {
-    return;
-  }
-  const existing = loadVaultRecords();
-  const deduped = existing.filter((v) => v.id !== record.id);
-  deduped.push(record);
-  localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(deduped));
+function storageKey(walletAddress: string): string {
+  return `privex_vaults_${walletAddress.trim().toLowerCase()}`;
 }
 
 /**
- * Returns all vault records saved to localStorage, or an empty list on parse error.
+ * Appends a newly created vault to the localStorage list for the given wallet address,
+ * deduplicating by vault id.
  */
-export function loadVaultRecords(): VaultRecord[] {
-  if (typeof localStorage === "undefined") {
+export function saveVaultRecord(record: VaultRecord, walletAddress: string): void {
+  if (typeof localStorage === "undefined" || walletAddress.trim().length === 0) {
+    return;
+  }
+  const existing = loadVaultRecords(walletAddress);
+  const deduped = existing.filter((v) => v.id !== record.id);
+  deduped.push(record);
+  localStorage.setItem(storageKey(walletAddress), JSON.stringify(deduped));
+}
+
+/**
+ * Returns vault records saved for the given wallet address, or an empty list on parse error.
+ */
+export function loadVaultRecords(walletAddress: string): VaultRecord[] {
+  if (typeof localStorage === "undefined" || walletAddress.trim().length === 0) {
     return [];
   }
   try {
-    const raw = localStorage.getItem(VAULT_STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(walletAddress));
     if (raw === null) {
       return [];
     }

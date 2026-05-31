@@ -445,7 +445,7 @@ export async function createVault(
       vaultId = await createVaultWithClient(ownerIdStr, trimmedRecipient, interval);
     }
 
-    saveVaultRecord({ id: vaultId, recipient: trimmedRecipient, interval, createdAt: Date.now() });
+    saveVaultRecord({ id: vaultId, recipient: trimmedRecipient, interval, createdAt: Date.now() }, ownerIdStr);
     return vaultId;
   } catch (err) {
     let detail: string;
@@ -532,6 +532,12 @@ export async function checkIn(vaultAccountId: string): Promise<string> {
       );
     }
 
+    if (canUseMidenWalletExtension()) {
+      throw new Error(
+        "Check-in via Miden Wallet extension is not yet implemented."
+      );
+    }
+
     const client = await getOrInitClient();
     await client.sync();
 
@@ -543,7 +549,8 @@ export async function checkIn(vaultAccountId: string): Promise<string> {
   } catch (err) {
     if (
       err instanceof Error &&
-      err.message.startsWith("Check-in is not implemented yet")
+      (err.message.startsWith("Check-in is not implemented yet") ||
+        err.message.startsWith("Check-in via Miden Wallet extension"))
     ) {
       throw err;
     }

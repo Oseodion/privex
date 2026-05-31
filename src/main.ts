@@ -302,6 +302,20 @@ function setupMobileMenus(): void {
 }
 
 /**
+ * Shows the other-wallet warning when window.ethereum is present, indicating
+ * a browser extension like MetaMask may interfere with the Miden connect flow.
+ */
+function maybeShowEthereumWarning(): void {
+  if (!("ethereum" in window)) {
+    return;
+  }
+  const el = queryById<HTMLElement>("connect-ext-warning");
+  if (el !== null) {
+    el.removeAttribute("hidden");
+  }
+}
+
+/**
  * Shows a message under the connect hero, or hides it when text is empty.
  */
 function setConnectError(message: string): void {
@@ -930,6 +944,7 @@ function initApp(): void {
     }
   });
 
+  maybeShowEthereumWarning();
   setConnectError("");
   setFormError("");
   setVaultCreateStatus("");

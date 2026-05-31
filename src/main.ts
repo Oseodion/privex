@@ -942,6 +942,9 @@ async function bootstrap(): Promise<void> {
   if (savedAccountReady) {
     updateWalletChips();
     showScreen("dashboard");
+    if (connectedViaExtension) {
+      void loadUserVaults();
+    }
   } else {
     showScreen("connect");
   }

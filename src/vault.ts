@@ -176,7 +176,7 @@ async function createVaultWithExtension(
   const vaultId = vaultAccount.id().toString();
   const transactionRequestB64 = serializeTransactionRequestToBase64(request);
 
-  await wallet.requestTransaction({
+  const result = await wallet.requestTransaction({
     type: "custom",
     payload: {
       address: vaultId,
@@ -184,6 +184,12 @@ async function createVaultWithExtension(
       transactionRequest: transactionRequestB64,
     },
   });
+
+  if (result == null || (result.transactionId ?? "").length === 0) {
+    throw new Error(
+      "Transaction was rejected or not confirmed by the wallet extension."
+    );
+  }
 
   return vaultId;
 }

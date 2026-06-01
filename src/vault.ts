@@ -44,6 +44,9 @@ const VAULT_ACCOUNT_MASP_URL = "/assets/vault_account.masp";
 /** Path to the init transaction script package served by Vite from the repo root. */
 const VAULT_INIT_MASP_URL = "/assets/vault_init.masp";
 
+/** Path to the check-in transaction script package served by Vite from the repo root. */
+const VAULT_CHECKIN_MASP_URL = "/assets/vault_checkin.masp";
+
 /**
  * Advice-map key for init_vault parameters. Must match vault-init-tx/src/lib.rs
  * (Word::from([0, 0, 0, 1])).
@@ -183,6 +186,47 @@ async function createVaultWithExtension(
   });
 
   return vaultId;
+}
+
+/**
+ * Sends a check-in transaction via the Miden Wallet extension (no MidenClient).
+ * The vault account executes the check-in script; no advice map is needed because
+ * check_in() reads all data from vault storage and the transaction context.
+ */
+async function createCheckinWithExtension(
+  vaultIdStr: string,
+  ownerIdStr: string
+): Promise<string> {
+  const checkinPkg = await fetchMaspPackage(
+    VAULT_CHECKIN_MASP_URL,
+    "vault check-in script"
+  );
+  const txScript = TransactionScript.fromPackage(checkinPkg);
+  const request = new TransactionRequestBuilder()
+    .withCustomScript(txScript)
+    .build();
+
+  const wallet = (window as unknown as { midenWallet?: MidenWalletExtension })
+    .midenWallet;
+  if (wallet === undefined || typeof wallet.requestTransaction !== "function") {
+    throw new Error("Miden Wallet extension is not available for transactions.");
+  }
+
+  const transactionRequestB64 = serializeTransactionRequestToBase64(request);
+  const result = await wallet.requestTransaction({
+    type: "custom",
+    payload: {
+      address: vaultIdStr,
+      recipientAddress: ownerIdStr,
+      transactionRequest: transactionRequestB64,
+    },
+  });
+
+  const txId = result?.transactionId ?? "";
+  if (txId.length === 0) {
+    throw new Error("Wallet extension did not return a transaction ID for the check-in.");
+  }
+  return txId;
 }
 
 /**
@@ -533,24 +577,19 @@ export async function checkIn(vaultAccountId: string): Promise<string> {
     }
 
     if (canUseMidenWalletExtension()) {
-      throw new Error(
-        "Check-in via Miden Wallet extension is not yet implemented."
-      );
+      return await createCheckinWithExtension(trimmedVault, ownerId);
     }
 
     const client = await getOrInitClient();
     await client.sync();
 
     throw new Error(
-      "Check-in is not implemented yet. Build the check_in transaction script, " +
-        "then submit it with submitWithFreshTestnetProver(client, account, request) " +
-        "so each transaction uses a fresh remote testnet prover."
+      "Check-in is not implemented yet for the non-extension path."
     );
   } catch (err) {
     if (
       err instanceof Error &&
-      (err.message.startsWith("Check-in is not implemented yet") ||
-        err.message.startsWith("Check-in via Miden Wallet extension"))
+      err.message.startsWith("Check-in is not implemented yet")
     ) {
       throw err;
     }

@@ -466,9 +466,9 @@ async function loadUserVaults(): Promise<void> {
     return;
   }
 
+  const { getUserVaults, getVaultStatus, isPrivateAccountLookupError } =
+    await import("./vault");
   try {
-    const { getUserVaults, getVaultStatus, isPrivateAccountLookupError } =
-      await import("./vault");
     const ids = await getUserVaults();
     if (ids.length === 0) {
       emptyEl.removeAttribute("hidden");

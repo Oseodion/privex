@@ -216,8 +216,8 @@ async function createCheckinWithExtension(
   const result = await wallet.requestTransaction({
     type: "custom",
     payload: {
-      address: vaultIdStr,
-      recipientAddress: ownerIdStr,
+      address: getConnectedAccountId() ?? vaultIdStr,
+      recipientAddress: vaultIdStr,
       transactionRequest: transactionRequestB64,
     },
   });
@@ -281,33 +281,6 @@ async function getOrInitClient(): Promise<MidenClient> {
   } catch {
     return initClient();
   }
-}
-
-/**
- * Creates a new remote prover for each transaction submit. The SDK can fall
- * back to local proving if a prover handle is reused after WASM consumes it.
- */
-function createFreshTestnetRemoteProver(): TransactionProver {
-  return TransactionProver.newRemoteProver(
-    "https://tx-prover.testnet.miden.io",
-    300_000n
-  );
-}
-
-/**
- * Submits a transaction with a fresh testnet remote prover on every call.
- */
-async function submitWithFreshTestnetProver(
-  client: MidenClient,
-  account: Parameters<MidenClient["transactions"]["submit"]>[0],
-  request: TransactionRequest
-): Promise<Awaited<ReturnType<MidenClient["transactions"]["submit"]>>> {
-  const remoteProver = createFreshTestnetRemoteProver();
-  return client.transactions.submit(account, request, {
-    waitForConfirmation: true,
-    timeout: 300_000,
-    prover: remoteProver,
-  });
 }
 
 /**
@@ -488,6 +461,9 @@ export async function createVault(
     } else {
       vaultId = await createVaultWithClient(ownerIdStr, trimmedRecipient, interval);
     }
+
+    // TODO: Lock assets into vault - send amount tokens from owner wallet to vault account
+    // after init_vault succeeds. This requires a separate send transaction.
 
     saveVaultRecord({ id: vaultId, recipient: trimmedRecipient, interval, createdAt: Date.now() }, ownerIdStr);
     return vaultId;

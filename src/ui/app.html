@@ -136,19 +136,26 @@
       <button type="button" class="btn-prim app-btn-lg" id="btn-create-vault-empty">Create New Vault</button>
     </div>
     <article class="app-vault-card hidden" id="app-vault-row-template">
-      <div class="app-vault-meta">
-        <div class="app-vault-head">
-          <span class="app-status app-status-active">active</span>
+      <div class="app-vault-head">
+        <div class="app-vault-id-row">
           <span class="app-vault-id">0x1bb25f...df797</span>
+          <button type="button" class="app-vault-copy-btn" data-vault-copy-id="" aria-label="Copy vault ID">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
         </div>
-        <div class="app-vault-grid">
-          <div><span class="app-vault-k">Last check-in</span><span class="app-vault-v">block 1,204,882</span></div>
-          <div><span class="app-vault-k">Deadline</span><span class="app-vault-v">block 1,211,200</span></div>
-          <div class="app-vault-grid-extra" hidden><span class="app-vault-k">Interval</span><span class="app-vault-v"></span></div>
-        </div>
+        <span class="app-status app-status-active">active</span>
+      </div>
+      <div class="app-vault-grid">
+        <div><span class="app-vault-k">Last check-in</span><span class="app-vault-v">block 1,204,882</span></div>
+        <div><span class="app-vault-k">Deadline</span><span class="app-vault-v">block 1,211,200</span></div>
+        <div class="app-vault-grid-extra" hidden><span class="app-vault-k">Interval</span><span class="app-vault-v"></span></div>
+      </div>
+      <div class="app-vault-interval-banner" hidden>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="app-vault-interval-text"></span>
       </div>
       <div class="app-vault-actions">
-        <button type="button" class="btn-sec" data-vault-id="">Check In</button>
+        <button type="button" class="btn-checkin" data-vault-id="">Check In</button>
       </div>
     </article>
   </div>

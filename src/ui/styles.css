@@ -371,9 +371,7 @@ footer { position: relative; z-index: 1; border-top: 0.5px solid var(--border2);
   nav .nright > .btn-wallet { display: none; }
   .nmenu { display: flex; }
   .app-main { padding: 80px 24px 40px; }
-  .app-vault-card { grid-template-columns: 1fr; }
   .app-vault-grid { grid-template-columns: 1fr; }
-  .app-vault-actions { justify-content: flex-start; }
   .app-nav-dash .btn-launch { width: 100%; text-align: center; justify-content: center; }
   .app-page nav .nright > .btn-wallet { display: none; }
   .app-page nav .btn-launch { display: none; }
@@ -405,8 +403,6 @@ footer { position: relative; z-index: 1; border-top: 0.5px solid var(--border2);
   .app-form-actions .btn-sec { width: 100%; max-width: 100%; justify-content: center; }
   .app-connect .btn-prim.app-btn-lg { width: 100%; max-width: 100%; justify-content: center; }
   .app-connect-developer .btn-sec { width: 100%; max-width: 100%; justify-content: center; align-self: stretch; }
-  .app-vault-actions { flex-direction: column; align-items: stretch; }
-  .app-vault-actions .btn-sec { width: 100%; max-width: 100%; justify-content: center; }
   .app-page nav .nright { flex-wrap: nowrap; justify-content: flex-end; gap: 8px; }
   .app-page nav .btn-wallet,
   .app-page nav .btn-launch { width: 100%; max-width: 100%; justify-content: center; }
@@ -574,14 +570,61 @@ footer { position: relative; z-index: 1; border-top: 0.5px solid var(--border2);
   justify-content: center;
   align-items: center;
 }
-.app-vault-card { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
-.app-vault-meta { font-family: var(--mono); font-size: 11px; color: var(--text2); display: grid; gap: 12px; }
-.app-vault-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.app-vault-id { font-size: 12px; color: var(--text); letter-spacing: 0.2px; }
+.app-vault-card {
+  background: var(--bg2);
+  border: 0.5px solid var(--border2);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  transition: border-color 0.2s;
+}
+.app-vault-card:hover { border-color: rgba(255,107,53,0.25); }
+.app-vault-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.app-vault-id-row { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.app-vault-id { font-size: 12px; color: var(--text); letter-spacing: 0.2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-vault-copy-btn { background: none; border: none; cursor: pointer; color: var(--text2); padding: 3px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: color 0.2s; flex-shrink: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.3px; }
+.app-vault-copy-btn:hover { color: var(--orange); }
 .app-vault-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
 .app-vault-k { display: block; font-size: 9px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
 .app-vault-v { display: block; font-size: 12px; color: var(--text); }
-.app-vault-actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.app-vault-interval-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--odim);
+  border: 0.5px solid rgba(255,107,53,0.22);
+  border-radius: 7px;
+  padding: 8px 12px;
+  color: var(--orange);
+  font-size: 11px;
+}
+.app-vault-interval-banner svg { flex-shrink: 0; opacity: 0.8; }
+.app-vault-interval-text { flex: 1; }
+.app-vault-actions { margin-top: 2px; }
+.btn-checkin {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  padding: 13px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-checkin:hover { opacity: 0.83; }
+.btn-checkin:disabled { opacity: 0.5; cursor: not-allowed; }
 .app-empty {
   background: var(--bg2);
   border: 0.5px solid var(--border2);

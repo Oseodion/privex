@@ -447,11 +447,22 @@ async function loadUserVaults(): Promise<void> {
         valueCells[1].textContent = new Date(record.createdAt).toLocaleDateString();
       }
 
-      const extraRow = card.querySelector(".app-vault-grid-extra");
-      if (extraRow !== null && labelCells.length >= 3 && valueCells.length >= 3) {
-        extraRow.removeAttribute("hidden");
-        labelCells[2].textContent = "Interval";
-        valueCells[2].textContent = `${record.interval} blocks`;
+      const intervalBanner = card.querySelector(
+        ".app-vault-interval-banner"
+      ) as HTMLElement | null;
+      const intervalText = card.querySelector(
+        ".app-vault-interval-text"
+      ) as HTMLElement | null;
+      if (intervalBanner !== null && intervalText !== null && record.interval > 0) {
+        intervalBanner.removeAttribute("hidden");
+        intervalText.textContent = `Check-in every ${record.interval} blocks`;
+      }
+
+      const copyBtn = card.querySelector(
+        "button[data-vault-copy-id]"
+      ) as HTMLButtonElement | null;
+      if (copyBtn !== null) {
+        copyBtn.dataset.vaultCopyId = record.id;
       }
 
       const checkBtn = card.querySelector(
@@ -517,6 +528,13 @@ async function loadUserVaults(): Promise<void> {
           valueCells[0].textContent = "unknown";
           valueCells[1].textContent = "unknown";
         }
+      }
+
+      const copyBtn = card.querySelector(
+        "button[data-vault-copy-id]"
+      ) as HTMLButtonElement | null;
+      if (copyBtn !== null) {
+        copyBtn.dataset.vaultCopyId = vaultId;
       }
 
       const checkBtn = card.querySelector(
@@ -853,10 +871,8 @@ function setupVaultFormSubmit(): void {
         setFormError("");
         setVaultSubmitButtonLoading(false);
         showScreen("dashboard");
+        await loadUserVaults();
         setVaultMessage("Vault created successfully", true);
-        if (!connectedViaExtension) {
-          await loadUserVaults();
-        }
       } catch (err) {
         setVaultCreateStatus("");
         setVaultSubmitButtonLoading(false);
@@ -883,6 +899,22 @@ function setupVaultListDelegation(): void {
     if (!(target instanceof Element)) {
       return;
     }
+
+    const copyBtn = target.closest("button[data-vault-copy-id]");
+    if (copyBtn instanceof HTMLButtonElement) {
+      const fullId = copyBtn.dataset.vaultCopyId ?? "";
+      if (fullId.length > 0) {
+        const originalHtml = copyBtn.innerHTML;
+        void navigator.clipboard.writeText(fullId).then(() => {
+          copyBtn.textContent = "Copied";
+          window.setTimeout(() => {
+            copyBtn.innerHTML = originalHtml;
+          }, 1500);
+        });
+      }
+      return;
+    }
+
     const btn = target.closest("button[data-vault-id]");
     if (!(btn instanceof HTMLButtonElement)) {
       return;

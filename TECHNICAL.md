@@ -46,7 +46,7 @@ arithmetic is modular — raw comparison operators do not reflect natural orderi
 #### `vault-init-tx` — transaction script that initializes a vault
 
 A `#[tx_script]` that reads an advice map at key `Word::from([0,0,0,1])`, unpacks
-twelve Felts (owner Word, recipient Word, interval Felt + three padding Felts), and
+twelve Felts (owner Word, recipient Word, interval Felt (felts[8]); felts[9..11] are unused), and
 calls `account.init_vault(owner, recipient, interval)`. The executing account is the
 newly-created vault account.
 
@@ -261,10 +261,12 @@ on-chain.
 |---|---|
 | Vault template account | `0x1bb25f2739ce6180529dcc939df797` |
 | Explorer | https://testnet.midenscan.com/account/0x1bb25f2739ce6180529dcc939df797 |
+| Builder wallet | `0x8a149e66015e5b8054d648a6bc80d4` |
+| Explorer | https://testnet.midenscan.com/account/0x8a149e66015e5b8054d648a6bc80d4 |
 
 ### Known Transactions
 
 | Hash | Action |
 |---|---|
-| `0x178f52e8848ce57e4dadc077d36d42791ec4b4f9d0fd33f12539e492be510762` | Vault rule created |
-| `0x34c5fdbb1ccb622209d3b6308a700fee3778a69ac944cebcea42da4ac8c1f9da` | Assets locked |
+| `0x178f52e8848ce57e4dadc077d36d42791ec4b4f9d0fd33f12539e492be510762` | Send transaction (100 tokens) |
+| `0x34c5fdbb1ccb622209d3b6308a700fee3778a69ac944cebcea42da4ac8c1f9da` | Send transaction (50 tokens) |

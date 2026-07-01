@@ -9,6 +9,20 @@
 - **Testnet Contract:** https://testnet.midenscan.com/account/0x1bb25f2739ce6180529dcc939df797
 - **Miden Docs:** https://docs.miden.xyz
 
+## Current Status
+
+**Working:**
+- Wallet connect via Miden Wallet Chrome extension (v0.15)
+- Vault creation form and transaction submission
+- Vault display on dashboard (stored locally per wallet)
+- Landing page live at https://privex-ten.vercel.app
+
+**Known Issues:**
+- MAST package format mismatch ([0,0,2] vs [0,0,3]) between midenc 0.8.1 and @miden-sdk 0.15.3 — waiting on Miden team for fix
+- Asset locking not yet implemented — tokens are not actually transferred into the vault
+- Check-in transaction not yet tested end-to-end on v0.15
+- Vault status cannot be read from chain (private account limitation)
+
 ## The Problem
 
 Every blockchain transaction is public by default. When you move assets on
@@ -104,8 +118,8 @@ README.md           - this file
 
 ## Tech Stack
 
-- **Miden blockchain** - ZK rollup with client-side proving, private by default
-- **Miden SDK** - TypeScript SDK for frontend and wallet interactions
+- **Miden testnet v0.15** - ZK rollup with client-side proving, private by default
+- **Miden SDK 0.15.3** - TypeScript SDK for frontend and wallet interactions
 - **Rust** - smart contracts written for the Miden VM
 - **pnpm** - secure package manager with 7-day release age block
 
@@ -118,8 +132,9 @@ README.md           - this file
 
 ## Network
 
-- **Chain:** Miden testnet
-- **Toolchain:** stable 0.14.0
+- **Chain:** Miden testnet v0.15
+- **Toolchain:** stable 0.15.0
+- **SDK:** @miden-sdk/miden-sdk 0.15.3
 - **Status:** Active development
 
 ## Developer

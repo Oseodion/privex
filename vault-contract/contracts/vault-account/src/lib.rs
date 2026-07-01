@@ -1,8 +1,9 @@
 // Miden account components must not link the Rust standard library.
 #![no_std]
+// Required by the allocator generated inside #[component_storage].
 #![feature(alloc_error_handler)]
 
-use miden::{component, felt, tx, Felt, StorageMap, Word};
+use miden::{component, component_storage, felt, tx, Felt, StorageMap, Word};
 
 // -----------------------------------------------------------------------------
 // Storage map keys (each key is a fixed Word used with StorageMap<Word, Felt>)
@@ -56,9 +57,9 @@ const STORAGE_KEY_INTERVAL: Word =
 const STORAGE_KEY_STATUS: Word =
     Word::new([Felt::ZERO, Felt::ONE, Felt::ONE, Felt::ZERO]);
 
-// Vault account component. All persisted fields live in one storage map
-// so we follow the same pattern as the counter-account example contract.
-#[component]
+// Storage struct. All persisted fields live in one storage map so we follow
+// the same pattern as the counter-account example contract.
+#[component_storage]
 struct VaultContract {
     // Single map from fixed Word keys to Felt values. Logical slots
     // (owner limbs, recipient limbs, deadline, and so on) each use their own key.
@@ -66,12 +67,24 @@ struct VaultContract {
     vault_map: StorageMap<Word, Felt>,
 }
 
+// Public interface for the vault component (miden 0.13 requires a separate trait).
 #[component]
-impl VaultContract {
+trait VaultContractInterface {
+    fn init_vault(&mut self, owner: Word, recipient: Word, interval: Felt) -> Felt;
+    fn get_status(&self) -> Felt;
+    fn get_last_checkin(&self) -> Felt;
+    fn get_deadline(&self) -> Felt;
+    fn can_release(&self) -> Felt;
+    fn check_in(&mut self) -> Felt;
+    fn set_triggered(&mut self) -> Felt;
+}
+
+#[component]
+impl VaultContractInterface for VaultContract {
     // Runs once when the vault account is created: records who owns the vault, who receives
     // funds on trigger, how often check-ins are required, and starts counters at zero in the
     // active state.
-    pub fn init_vault(&mut self, owner: Word, recipient: Word, interval: Felt) -> Felt {
+    fn init_vault(&mut self, owner: Word, recipient: Word, interval: Felt) -> Felt {
         let owner_limbs = owner.into_elements();
         self.vault_map
             .set(STORAGE_KEY_OWNER_LIMB_0, owner_limbs[0]);
@@ -101,22 +114,22 @@ impl VaultContract {
     }
 
     // Reads the vault lifecycle flag from storage (0 active, 1 triggered, 2 closed).
-    pub fn get_status(&self) -> Felt {
+    fn get_status(&self) -> Felt {
         self.vault_map.get(STORAGE_KEY_STATUS)
     }
 
     // Reads the block height of the last successful check-in from storage.
-    pub fn get_last_checkin(&self) -> Felt {
+    fn get_last_checkin(&self) -> Felt {
         self.vault_map.get(STORAGE_KEY_LAST_CHECKIN)
     }
 
     // Reads the block height deadline from storage (must check in before this block).
-    pub fn get_deadline(&self) -> Felt {
+    fn get_deadline(&self) -> Felt {
         self.vault_map.get(STORAGE_KEY_DEADLINE)
     }
 
     // Tells callers whether the chain has passed the check-in deadline (release path allowed).
-    pub fn can_release(&self) -> Felt {
+    fn can_release(&self) -> Felt {
         let deadline = self.vault_map.get(STORAGE_KEY_DEADLINE);
 
         // A stored deadline of zero means no meaningful deadline is set yet, so do not report release.
@@ -139,7 +152,7 @@ impl VaultContract {
     }
 
     // Records a successful check-in from the owner flow: stamps the current block and extends the deadline.
-    pub fn check_in(&mut self) -> Felt {
+    fn check_in(&mut self) -> Felt {
         // Reject the call when the vault is not active (compare the stored status as a plain integer).
         let status = self.vault_map.get(STORAGE_KEY_STATUS);
         assert!(status.as_canonical_u64() == 0);
@@ -157,7 +170,8 @@ impl VaultContract {
         let current_u = current_block.as_canonical_u64();
         let interval_u = interval.as_canonical_u64();
         let new_deadline_u = current_u.checked_add(interval_u).unwrap();
-        let new_deadline = Felt::new(new_deadline_u);
+        // Felt::new returns Result in miden 0.13; block heights are always valid field elements.
+        let new_deadline = Felt::new(new_deadline_u).expect("block deadline fits in field");
 
         // Persist the next height by which another check-in is required.
         self.vault_map.set(STORAGE_KEY_DEADLINE, new_deadline);
@@ -166,7 +180,7 @@ impl VaultContract {
     }
 
     // Marks the vault as triggered once the missed check-in deadline has passed and the vault is still active.
-    pub fn set_triggered(&mut self) -> Felt {
+    fn set_triggered(&mut self) -> Felt {
         // Require the same release predicate the public can_release helper exposes (must read as integer one).
         let release_ok = self.can_release();
         assert!(release_ok.as_canonical_u64() == 1);

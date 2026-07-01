@@ -1,0 +1,7 @@
+[package]
+name = "vault-account"
+version = "0.1.0"
+
+[lib]
+kind = "account-component"
+namespace = "miden:vault-account/vault-contract-interface@0.1.0"

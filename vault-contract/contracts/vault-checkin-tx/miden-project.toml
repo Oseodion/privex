@@ -1,0 +1,13 @@
+[package]
+name = "vault-checkin-tx"
+version = "0.1.0"
+
+[lib]
+kind = "tx-script"
+namespace = "miden:vault-checkin-tx"
+
+[dependencies]
+vault-account = { path = "../vault-account" }
+
+[package.metadata.miden.dependencies]
+vault-account = { wit = "../vault-account/target/generated-wit" }

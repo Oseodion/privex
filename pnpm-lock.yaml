@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@miden-sdk/miden-sdk':
-        specifier: 0.15.3
-        version: 0.15.3
+        specifier: 0.15.9
+        version: 0.15.9
     devDependencies:
       '@types/node':
         specifier: ^25.8.0
@@ -205,21 +205,21 @@ packages:
     resolution: {integrity: sha512-AokJm4tuBHillT+FpMtxQ60n8ObyXBatq7jD2/JA9dxbDDokKQm8KMht5ibGzLVU9IJDIKK4TPKgMHEYMn3lMg==}
     engines: {node: '>=18'}
 
-  '@miden-sdk/miden-sdk@0.15.3':
-    resolution: {integrity: sha512-zaP+j4ukT+4x+IeXB/dxsS5TNbIpS8arwnsbqsofju0Phks9iKfYalRfKlsSRhjtHxmoGAe6sy30zdXdSzti+Q==}
+  '@miden-sdk/miden-sdk@0.15.9':
+    resolution: {integrity: sha512-2eDW0sTYX11Abp2UI2ekQJsb0V7q3kDOPhiiqf9hN4//Eb6ogCDGpfHLDWEu4T/FBFJTi1ynT3el7Yx9PEtBuA==}
 
-  '@miden-sdk/node-darwin-arm64@0.15.3':
-    resolution: {integrity: sha512-pIhQ0UhbOrbrUP4CaiCqCp+QZx3keeswclqQy4AmPs/EELS6+dSW5Mj0Fgcyi1MdZlpaiuhYyT5JL4gDeFSxkg==}
+  '@miden-sdk/node-darwin-arm64@0.15.9':
+    resolution: {integrity: sha512-AbsHzh+PktfqhIM/CXTOaFhwNvhtAZALx5kHTKQJK9kMz0K3H7VBjgEo2witHq3NVV56iqgksMvMfigtDgoDkA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@miden-sdk/node-darwin-x64@0.15.3':
-    resolution: {integrity: sha512-SamG3/yWpsgiie3RBdh8k8mL1+v7qK+w3N0Zn6+yWNXKWUDNpViTdQ1flkC/QGVjB3aWKlxIyrpYQXj1JEZrlw==}
+  '@miden-sdk/node-darwin-x64@0.15.9':
+    resolution: {integrity: sha512-q+I/tUVGe8ngS1+U4EVjNy22dmjDo5JtV5THBxtJBSXhU7uNy4o8CtpFIbUWA82z8ZuuuQOkOFyIUfdDBBj5fQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@miden-sdk/node-linux-x64-gnu@0.15.3':
-    resolution: {integrity: sha512-JLmsiLZzlS24nKD0z6/MFn3UG8Q/4mq29CRmNXzRBW0zXfgnFdctQFv8hL7bOZstWkixpdPdSL95mJ9xCvuITA==}
+  '@miden-sdk/node-linux-x64-gnu@0.15.9':
+    resolution: {integrity: sha512-ZuNZQhNe4v3MQd1nIcuehxwTdJIlCSL6tKhzlMEAYFMSi5q/2GMCPprp9dbs+8Q22f9D233fViu+RfbsoRtC3Q==}
     cpu: [x64]
     os: [linux]
 
@@ -952,22 +952,22 @@ snapshots:
 
   '@isaacs/cliui@9.0.0': {}
 
-  '@miden-sdk/miden-sdk@0.15.3':
+  '@miden-sdk/miden-sdk@0.15.9':
     dependencies:
       dexie: 4.4.2
       glob: 11.1.0
     optionalDependencies:
-      '@miden-sdk/node-darwin-arm64': 0.15.3
-      '@miden-sdk/node-darwin-x64': 0.15.3
-      '@miden-sdk/node-linux-x64-gnu': 0.15.3
+      '@miden-sdk/node-darwin-arm64': 0.15.9
+      '@miden-sdk/node-darwin-x64': 0.15.9
+      '@miden-sdk/node-linux-x64-gnu': 0.15.9
 
-  '@miden-sdk/node-darwin-arm64@0.15.3':
+  '@miden-sdk/node-darwin-arm64@0.15.9':
     optional: true
 
-  '@miden-sdk/node-darwin-x64@0.15.3':
+  '@miden-sdk/node-darwin-x64@0.15.9':
     optional: true
 
-  '@miden-sdk/node-linux-x64-gnu@0.15.3':
+  '@miden-sdk/node-linux-x64-gnu@0.15.9':
     optional: true
 
   '@napi-rs/wasm-runtime@1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':

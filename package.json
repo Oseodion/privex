@@ -21,7 +21,7 @@
     ]
   },
   "dependencies": {
-    "@miden-sdk/miden-sdk": "0.15.3"
+    "@miden-sdk/miden-sdk": "0.15.9"
   },
   "devDependencies": {
     "@types/node": "^25.8.0",

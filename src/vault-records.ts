@@ -4,6 +4,8 @@ export interface VaultRecord {
   recipient: string;
   interval: number;
   createdAt: number;
+  /** Wallet address that created the vault. Missing on records saved before this field existed. */
+  ownerAddress?: string;
 }
 
 function storageKey(walletAddress: string): string {
@@ -47,7 +49,9 @@ export function loadVaultRecords(walletAddress: string): VaultRecord[] {
         typeof (item as VaultRecord).id === "string" &&
         typeof (item as VaultRecord).recipient === "string" &&
         typeof (item as VaultRecord).interval === "number" &&
-        typeof (item as VaultRecord).createdAt === "number"
+        typeof (item as VaultRecord).createdAt === "number" &&
+        ((item as VaultRecord).ownerAddress === undefined ||
+          typeof (item as VaultRecord).ownerAddress === "string")
     );
   } catch {
     return [];

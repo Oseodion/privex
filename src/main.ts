@@ -339,9 +339,8 @@ function setVaultMessage(message: string, show: boolean): void {
   }
 }
 
-/** Shown while createVault is proving and submitting on testnet (1-3 minutes). */
-const VAULT_CREATE_PENDING_MESSAGE =
-  "Creating vault on Miden testnet. ZK proof is being generated. This takes 1-3 minutes. Please wait...";
+/** Shown briefly while the vault record is saved. No on-chain transaction runs here. */
+const VAULT_CREATE_PENDING_MESSAGE = "Creating vault...";
 
 const VAULT_SUBMIT_BUTTON_LABEL = "Create Vault";
 const VAULT_SUBMIT_BUTTON_LOADING_LABEL = "Creating...";
